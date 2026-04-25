@@ -9,8 +9,8 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#10b981",
-          foreground: "#052e16",
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
         },
         destructive: {
           DEFAULT: "#ef4444",

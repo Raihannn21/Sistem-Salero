@@ -5,20 +5,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --primary: #10b981;
-  --primary-foreground: #052e16;
-  --card: #121216;
-  --card-foreground: #fafafa;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #10b981;
-  --radius: 0.75rem;
+  --background: #fcfcfc;
+  --foreground: #09090b;
+  --primary: #800000;
+  --primary-hover: #991b1b;
+  --primary-light: #fef2f2;
+  --primary-foreground: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --muted: #f8f8f8;
+  --muted-foreground: #71717a;
+  --border: #f1f1f1;
+  --input: #f1f1f1;
+  --ring: #800000;
+  --radius: 1.25rem;
+}
+
+body {
+  background: radial-gradient(circle at top right, #fff5f5 0%, #fcfcfc 40%);
+  color: var(--foreground);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
@@ -53,10 +60,15 @@ a {
 }
 
 .glass {
-  background: rgba(18, 18, 22, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.02);
+}
+
+.premium-shadow {
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
 }
 
 @keyframes fadeIn {
@@ -77,10 +89,10 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: #e4e4e7;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: #d4d4d8;
 }

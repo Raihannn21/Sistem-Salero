@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Info
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export default async function MenuPage() {
   const session = await getServerSession(authOptions);
@@ -30,10 +31,13 @@ export default async function MenuPage() {
 
   const menuWithHPP = menuItems.map(item => {
     const hpp = item.recipes.reduce((acc, recipe) => {
-      return acc + (recipe.ingredient.pricePerUnit * recipe.quantity);
+      const ingredientPrice = recipe.ingredient.pricePerUnit || 0;
+      const quantity = recipe.quantity || 0;
+      return acc + (ingredientPrice * quantity);
     }, 0);
+    
     const margin = item.basePrice - hpp;
-    const marginPercent = hpp > 0 ? (margin / item.basePrice) * 100 : 0;
+    const marginPercent = item.basePrice > 0 ? (margin / item.basePrice) * 100 : 0;
     
     return { ...item, hpp, margin, marginPercent };
   });
@@ -63,7 +67,7 @@ export default async function MenuPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Harga Jual</p>
-                  <p className="text-xl font-bold text-white">Rp {menu.basePrice.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-white">{formatCurrency(menu.basePrice)}</p>
                 </div>
               </div>
 
@@ -76,7 +80,7 @@ export default async function MenuPage() {
                     <Info size={14} />
                     <span className="text-xs font-medium">HPP Produksi</span>
                   </div>
-                  <span className="text-sm font-bold text-zinc-200">Rp {menu.hpp.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-zinc-200">{formatCurrency(menu.hpp)}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-primary/5 border border-primary/10">
@@ -85,7 +89,7 @@ export default async function MenuPage() {
                     <span className="text-xs font-bold">Margin Keuntungan</span>
                   </div>
                   <div className="text-right">
-                    <span className="block text-sm font-bold text-primary">Rp {menu.margin.toLocaleString()}</span>
+                    <span className="block text-sm font-bold text-primary">{formatCurrency(menu.margin)}</span>
                     <span className="text-[10px] font-bold text-primary/70">{menu.marginPercent.toFixed(1)}% dari harga jual</span>
                   </div>
                 </div>

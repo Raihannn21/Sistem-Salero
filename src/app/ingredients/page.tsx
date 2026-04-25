@@ -10,6 +10,7 @@ import {
   MoreVertical,
   AlertCircle
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export default async function IngredientsPage() {
   const session = await getServerSession(authOptions);
@@ -80,7 +81,7 @@ export default async function IngredientsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-5 text-zinc-400 font-medium">{item.unit}</td>
-                    <td className="px-6 py-5 text-white font-bold">Rp {item.pricePerUnit.toLocaleString()}</td>
+                    <td className="px-6 py-5 text-white font-bold">{formatCurrency(item.pricePerUnit)}</td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-2">
                         <div className={`h-2 w-2 rounded-full ${item.stock <= item.minStock ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-primary shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`}></div>

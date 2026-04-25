@@ -11,13 +11,18 @@ import {
   ArrowUpRight,
   Package
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 async function getStats() {
-  const [salesCount, lowStockCount, ingredientsCount] = await Promise.all([
+  const [salesCount, ingredients, ingredientsCount] = await Promise.all([
     prisma.sale.count(),
-    prisma.ingredient.count({ where: { stock: { lte: prisma.ingredient.fields.minStock } } }),
+    prisma.ingredient.findMany({
+      select: { stock: true, minStock: true }
+    }),
     prisma.ingredient.count(),
   ]);
+
+  const lowStockCount = ingredients.filter(i => i.stock <= i.minStock).length;
 
   const salesData = await prisma.sale.findMany({
     select: { totalPrice: true },
@@ -56,7 +61,7 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-10">
           <StatCard 
             title="Total Pendapatan" 
-            value={`Rp ${stats.totalRevenue.toLocaleString()}`} 
+            value={formatCurrency(stats.totalRevenue)} 
             icon={<DollarSign className="text-primary" />} 
             trend="+12%"
           />

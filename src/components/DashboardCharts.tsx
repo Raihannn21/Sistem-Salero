@@ -76,7 +76,7 @@ export default function DashboardCharts({ data }: DashboardChartsProps) {
                 }}
                 itemStyle={{ fontWeight: 900, fontSize: '12px' }}
                 labelStyle={{ fontWeight: 900, marginBottom: '10px', color: '#18181b', fontSize: '14px' }}
-                formatter={(value: number) => [`Rp ${value.toLocaleString()}`, '']}
+                formatter={(value: any) => [`Rp ${Number(value).toLocaleString()}`, '']}
               />
               <Legend 
                 verticalAlign="top" 

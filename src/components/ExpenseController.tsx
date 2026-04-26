@@ -3,8 +3,9 @@
 import React, { useState, useMemo } from "react";
 import { PageHeader } from "./ui/PageHeader";
 import { Button } from "./ui/Button";
-import { Plus, Trash2, Calendar, Wallet, Filter, ArrowRight, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Calendar, Wallet, Filter, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "./ui/Card";
+import DatePicker from "./ui/DatePicker";
 import { formatCurrency, cn } from "@/lib/utils";
 import { deleteExpense } from "@/actions/expenses";
 import { useToast } from "./ui/Toast";
@@ -18,26 +19,47 @@ interface ExpenseControllerProps {
   expenses: Expense[];
 }
 
+const ITEMS_PER_PAGE = 15;
+
 export default function ExpenseController({ expenses }: ExpenseControllerProps) {
   const { showToast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // Filter States
-  const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-01")); // Default to start of month
-  const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter(exp => {
       const expDate = new Date(exp.date);
-      const start = startOfDay(parseISO(startDate));
-      const end = endOfDay(parseISO(endDate));
-      return isWithinInterval(expDate, { start, end });
+      let matchesDate = true;
+      if (startDate && endDate) {
+        matchesDate = isWithinInterval(expDate, { 
+          start: startOfDay(parseISO(startDate)), 
+          end: endOfDay(parseISO(endDate)) 
+        });
+      } else if (startDate) {
+        matchesDate = expDate >= startOfDay(parseISO(startDate));
+      } else if (endDate) {
+        matchesDate = expDate <= endOfDay(parseISO(endDate));
+      }
+      return matchesDate;
     });
   }, [expenses, startDate, endDate]);
 
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [startDate, endDate]);
+
   const totalFiltered = filteredExpenses.reduce((acc, exp) => acc + exp.amount, 0);
+
+  const totalPages = Math.ceil(filteredExpenses.length / ITEMS_PER_PAGE);
+  const paginatedExpenses = filteredExpenses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const openDeleteConfirm = (id: string) => {
     setSelectedId(id);
@@ -66,94 +88,132 @@ export default function ExpenseController({ expenses }: ExpenseControllerProps) 
         action={
           <Button onClick={() => setIsModalOpen(true)} className="shadow-lg shadow-primary/20">
             <Plus size={18} strokeWidth={3} />
-            TAMBAH PENGELUARAN
+            <span className="hidden sm:inline ml-2">TAMBAH PENGELUARAN</span>
+            <span className="sm:hidden ml-2">TAMBAH</span>
           </Button>
         }
       />
 
-      <div className="space-y-10">
+      <div className="space-y-6 md:space-y-10">
         {/* Filter Section */}
-        <Card className="border-2 border-primary/5 bg-white/80 backdrop-blur-sm">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                <Filter size={20} strokeWidth={2.5} />
+        <Card className="border-2 border-primary/5 bg-white shadow-premium p-6 md:p-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div className="flex items-center gap-4 md:gap-6">
+              <div className="h-12 w-12 md:h-16 md:w-16 rounded-2xl md:rounded-[1.5rem] bg-primary/5 flex items-center justify-center text-primary shrink-0">
+                <Filter size={24} strokeWidth={2.5} className="md:w-7 md:h-7" />
               </div>
               <div>
-                <h3 className="font-black text-zinc-900 tracking-tight leading-none">Filter Periode</h3>
-                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Pilih rentang tanggal</p>
+                <h3 className="text-lg md:text-xl font-black text-zinc-900 tracking-tight leading-none mb-1 md:mb-2">Filter Data</h3>
+                <p className="text-[9px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Atur periode audit Anda</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="relative group">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={16} />
-                <input 
-                  type="date" 
-                  className="bg-zinc-50 border border-zinc-100 text-zinc-900 pl-12 pr-4 py-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold text-sm"
+            <div className="flex-1 w-full lg:max-w-xl">
+              <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4">
+                <DatePicker 
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={setStartDate}
+                  placeholder="Mulai"
+                  className="w-full"
                 />
-              </div>
-              <div className="h-[2px] w-4 bg-zinc-200 rounded-full" />
-              <div className="relative group">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={16} />
-                <input 
-                  type="date" 
-                  className="bg-zinc-50 border border-zinc-100 text-zinc-900 pl-12 pr-4 py-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold text-sm"
+                <ArrowRight size={16} className="text-zinc-300 hidden sm:block shrink-0" />
+                <DatePicker 
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={setEndDate}
+                  placeholder="Sampai"
+                  className="w-full"
                 />
               </div>
             </div>
 
-            <div className="px-6 py-4 rounded-2xl bg-zinc-900 text-white flex items-center gap-4 shadow-xl shadow-zinc-200">
-              <Wallet size={20} className="text-primary" />
+            <div className="px-6 py-4 md:px-8 md:py-5 rounded-2xl md:rounded-[1.5rem] bg-zinc-950 text-white flex items-center gap-4 md:gap-6 shadow-2xl shadow-zinc-200">
+              <Wallet size={20} className="text-primary md:w-6 md:h-6" />
               <div>
-                <p className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.3em] leading-none mb-1">Total Terfilter</p>
-                <p className="text-xl font-black tracking-tighter">{formatCurrency(totalFiltered)}</p>
+                <p className="text-[8px] md:text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1 md:mb-2">Total</p>
+                <p className="text-lg md:text-2xl font-black tracking-tighter">{formatCurrency(totalFiltered)}</p>
               </div>
             </div>
           </div>
         </Card>
 
         {/* History List */}
-        <div className="space-y-6">
-          {filteredExpenses.length === 0 ? (
-            <div className="py-32 text-center bg-white rounded-[3rem] border-2 border-zinc-50 border-dashed">
-              <p className="text-zinc-300 font-bold uppercase tracking-widest text-sm">Tidak ada data untuk periode ini</p>
+        <div className="space-y-4">
+          {paginatedExpenses.length === 0 ? (
+            <div className="py-24 md:py-32 text-center bg-white rounded-[2rem] md:rounded-[3rem] border-2 border-zinc-50 border-dashed">
+              <p className="text-zinc-300 font-bold uppercase tracking-widest text-[10px] md:text-xs">Data tidak ditemukan</p>
             </div>
           ) : (
-            filteredExpenses.map((exp) => (
-              <div key={exp.id} className="group p-8 rounded-[2.5rem] bg-white border border-zinc-50 shadow-sm flex items-center justify-between hover:border-primary/20 hover:shadow-xl hover:shadow-zinc-200/20 transition-all duration-500 animate-in fade-in slide-in-from-bottom-8">
-                <div className="flex items-center gap-8">
-                  <div className="h-16 w-16 rounded-3xl bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-inner">
-                    <Calendar size={24} />
+            paginatedExpenses.map((exp) => (
+              <div key={exp.id} className="group p-5 md:p-6 rounded-2xl md:rounded-[2rem] bg-white border border-zinc-50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between hover:border-primary/20 hover:shadow-xl hover:shadow-zinc-200/20 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
+                <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
+                  <div className="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-300 group-hover:bg-primary/5 group-hover:text-primary transition-all duration-500 shrink-0">
+                    <Calendar size={20} />
                   </div>
-                  <div>
-                    <h4 className="text-xl font-black text-zinc-900 tracking-tight group-hover:text-primary transition-colors">{exp.description}</h4>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="px-3 py-1 rounded-full bg-zinc-100 text-zinc-500 text-[10px] font-black uppercase tracking-widest">
-                        {format(new Date(exp.date), 'EEEE, dd MMMM yyyy', { locale: id })}
-                      </span>
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base md:text-lg font-black text-zinc-900 tracking-tight group-hover:text-primary transition-colors truncate pr-2">
+                      {exp.description}
+                    </h4>
+                    <p className="text-[10px] md:text-[11px] font-bold text-zinc-400 uppercase tracking-wide mt-0.5">
+                      {format(new Date(exp.date), 'EEEE, d MMM yyyy', { locale: id })}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-8">
-                  <p className="text-2xl font-black text-zinc-900 tracking-tighter">{formatCurrency(exp.amount)}</p>
+                
+                <div className="flex items-center justify-between w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-zinc-50">
+                  <p className="text-lg md:text-xl font-black text-zinc-900 tracking-tighter sm:mr-6">
+                    {formatCurrency(exp.amount)}
+                  </p>
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => openDeleteConfirm(exp.id)}
-                    className="h-12 w-12 rounded-xl bg-red-50 text-red-200 hover:text-red-500 hover:bg-red-100 transition-all border border-red-50"
+                    className="h-10 w-10 md:h-11 md:w-11 rounded-xl bg-red-50 text-red-300 hover:text-red-500 hover:bg-red-100 transition-all border border-red-50 p-0 shrink-0"
                   >
-                    <Trash2 size={20} />
+                    <Trash2 size={18} />
                   </Button>
                 </div>
               </div>
             ))
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-8 md:mt-12 pb-10">
+            <Button 
+              variant="ghost" 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="h-10 md:h-12 px-4 md:px-6 rounded-xl md:rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest"
+            >
+              <ChevronLeft size={16} className="mr-1 md:mr-2" /> Prev
+            </Button>
+            
+            <div className="flex items-center gap-1 md:gap-2">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={cn(
+                    "h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl font-black text-xs transition-all",
+                    currentPage === i + 1 ? "bg-primary text-white shadow-xl shadow-primary/20" : "text-zinc-400 hover:bg-zinc-100"
+                  )}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+
+            <Button 
+              variant="ghost" 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="h-10 md:h-12 px-4 md:px-6 rounded-xl md:rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest"
+            >
+              Next <ChevronRight size={16} className="ml-1 md:ml-2" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <ExpenseModal 

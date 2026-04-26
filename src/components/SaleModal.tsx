@@ -42,12 +42,15 @@ export default function SaleModal({ isOpen, onClose, menuItems, editData }: Sale
     try {
       let result;
       if (editData) {
-        result = await updateSale(editData.id, { quantity: parseInt(quantity) });
+        result = await updateSale(editData.id, { 
+          menuItemId, 
+          quantity: parseInt(quantity) 
+        });
       } else {
-        const formData = new FormData();
-        formData.append("menuItemId", menuItemId);
-        formData.append("quantity", quantity);
-        result = await recordSale(formData);
+        result = await recordSale({ 
+          menuItemId, 
+          quantity: parseInt(quantity) 
+        });
       }
 
       if (result.success) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { LogIn, Lock, User as UserIcon, Loader2 } from "lucide-react";
@@ -38,20 +39,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#fcfcfc] flex items-center justify-center p-6 relative overflow-hidden font-sans">
       {/* Abstract Background Elements */}
       <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
       <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
 
       <div className="w-full max-w-md relative z-10">
-        <div className="bg-white rounded-[3rem] p-10 lg:p-12 border border-zinc-50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)]">
+        <div className="bg-white rounded-[3rem] p-10 lg:p-14 border border-zinc-50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)]">
           <div className="flex flex-col items-center mb-12">
             <div className="relative mb-6">
-              <div className="absolute inset-0 bg-primary blur-xl opacity-20"></div>
-              <div className="relative h-16 w-16 rounded-[22px] bg-primary flex items-center justify-center font-black text-white text-3xl shadow-2xl shadow-primary/40">S</div>
+              <div className="absolute inset-0 bg-primary blur-3xl opacity-20 scale-150"></div>
+              <div className="relative flex items-center justify-center transition-transform duration-700 hover:scale-110">
+                <Image 
+                  src="/salero-logo.png" 
+                  alt="Salero Logo" 
+                  width={180} 
+                  height={180} 
+                  sizes="180px"
+                  className="object-contain"
+                  priority
+                />
+              </div>
             </div>
-            <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight mb-2">Salero System</h1>
-            <p className="text-zinc-400 font-semibold tracking-wide text-xs">Management & HPP Analysis</p>
+            {/* Texts removed for a cleaner look as requested */}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -64,22 +74,22 @@ export default function LoginPage() {
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Username</label>
-                <div className="relative">
-                  <UserIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300" size={18} />
+                <div className="relative group">
+                  <UserIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={18} />
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold placeholder:text-zinc-300"
-                    placeholder="admin"
+                    placeholder="Masukkan username"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300" size={18} />
+                <div className="relative group">
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={18} />
                   <input
                     type="password"
                     value={password}
@@ -95,21 +105,21 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-5 bg-primary text-white font-bold rounded-2xl shadow-2xl shadow-primary/30 hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all tracking-wide uppercase text-xs flex items-center justify-center gap-3"
+              className="w-full py-5 bg-zinc-950 text-white font-black rounded-2xl shadow-2xl shadow-zinc-200 hover:bg-zinc-900 hover:scale-[1.02] active:scale-[0.98] transition-all tracking-widest uppercase text-[10px] flex items-center justify-center gap-3"
             >
               {loading ? (
                 <Loader2 className="animate-spin" size={20} />
               ) : (
                 <>
                   MASUK KE SISTEM
-                  <LogIn size={18} strokeWidth={2} />
+                  <LogIn size={18} strokeWidth={3} />
                 </>
               )}
             </button>
           </form>
 
           <div className="mt-12 text-center">
-            <p className="text-xs font-bold text-zinc-400">
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">
               Butuh bantuan? <span className="text-primary hover:underline cursor-pointer">Hubungi Developer</span>
             </p>
           </div>

@@ -10,51 +10,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum Role {
+  OWNER
+  EMPLOYEE
 }
 
-model Ingredient {
-  id               String       @id @default(cuid())
-  name             String
-  unit             String       // Purchase Unit, e.g., "kg", "box"
-  pricePerUnit     Float        // Price per purchase unit
-  recipeUnit       String?      // Recipe Unit, e.g., "potong", "biji", "sendok"
-  recipeYield      Float        @default(1) // How many recipe units in one purchase unit
-  recipes          RecipeItem[]
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+model User {
+  id               String   @id @default(cuid())
+  username         String   @unique
+  password         String
+  role             Role     @default(EMPLOYEE)
+  
+  // Data Pribadi Karyawan
+  fullName         String?
+  nik              String?
+  address          String?
+  emergencyContact String?
+  socialMedia      String?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model MenuItem {
   id           String       @id @default(cuid())
   name         String
-  description  String?
   basePrice    Float        // Selling price
-  recipes      RecipeItem[]
   sales        Sale[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 }
 
-model RecipeItem {
-  id            String     @id @default(cuid())
-  menuItem      MenuItem   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
-  menuItemId    String
-  ingredient    Ingredient @relation(fields: [ingredientId], references: [id])
-  ingredientId  String
-  quantity      Float      // Quantity of ingredient used for this menu item
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-}
-
 model Sale {
   id         String   @id @default(cuid())
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   menuItemId String
   quantity   Int
   totalPrice Float
@@ -67,7 +56,7 @@ model Expense {
   id          String   @id @default(cuid())
   description String
   amount      Float
-  category    String?  // e.g., "Bensin", "Gas", "Parkir"
+  category    String?  // e.g., "Belanja", "Operasional"
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

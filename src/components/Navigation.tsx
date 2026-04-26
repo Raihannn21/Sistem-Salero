@@ -9,23 +9,31 @@ import {
   ShoppingCart, 
   LogOut,
   Menu as MenuIcon,
-  X
+  X,
+  BarChart3
 } from "lucide-react";
 import { useState } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/Button";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Manajemen Menu", href: "/menu", icon: UtensilsCrossed },
-  { label: "Stok Bahan", href: "/ingredients", icon: Package },
-  { label: "Penjualan", href: "/sales", icon: ShoppingCart },
+  { label: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["OWNER"] },
+  { label: "Penjualan (Kasir)", href: "/sales", icon: ShoppingCart, roles: ["OWNER", "EMPLOYEE"] },
+  { label: "Catat Belanja", href: "/expenses", icon: Package, roles: ["OWNER"] },
+  { label: "Manajemen Menu", href: "/menu", icon: UtensilsCrossed, roles: ["OWNER"] },
+  { label: "Laporan Keuangan", href: "/reports", icon: BarChart3, roles: ["OWNER"] },
+  { label: "Kelola Karyawan", href: "/employees", icon: X, roles: ["OWNER"] }, // Added Employee management for Owner
 ];
 
 export default function Navigation() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const { data: session } = useSession();
+  
+  const userRole = (session?.user as any)?.role || "EMPLOYEE";
+
+  const visibleItems = NAV_ITEMS.filter(item => item.roles.includes(userRole));
 
   return (
     <>
@@ -43,7 +51,7 @@ export default function Navigation() {
         </div>
 
         <nav className="space-y-2">
-          {NAV_ITEMS.map((item) => {
+          {visibleItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -90,7 +98,7 @@ export default function Navigation() {
         <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm lg:hidden" onClick={() => setIsOpen(false)}>
           <div className="absolute right-0 top-0 h-full w-72 bg-white p-8 shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
             <nav className="mt-12 space-y-4">
-              {NAV_ITEMS.map((item) => (
+              {visibleItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

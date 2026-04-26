@@ -3,39 +3,28 @@
 import React, { useState } from "react";
 import { PageHeader } from "./ui/PageHeader";
 import { Button } from "./ui/Button";
-import { Plus, Search, Utensils, Trash2, Edit2, TrendingUp } from "lucide-react";
+import { Plus, Search, Utensils, Trash2, Edit2, ShoppingBag } from "lucide-react";
 import { Card } from "./ui/Card";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import MenuModal from "./MenuModal";
 import { deleteMenuItem } from "@/actions/menu";
 import { useToast } from "./ui/Toast";
 import { ConfirmModal } from "./ui/ConfirmModal";
-
-import { Ingredient, MenuItem, RecipeItem } from "@prisma/client";
-
-type MenuItemWithRecipes = MenuItem & {
-  recipes: RecipeItem[];
-};
-
-type MenuItemWithCalculations = MenuItemWithRecipes & {
-  hpp: number;
-  marginPercent: number;
-};
+import { MenuItem } from "@prisma/client";
 
 interface MenuControllerProps {
-  menuItems: MenuItemWithCalculations[];
-  ingredients: Ingredient[];
+  menuItems: (MenuItem & { _count: { sales: number } })[];
 }
 
-export default function MenuController({ menuItems, ingredients }: MenuControllerProps) {
+export default function MenuController({ menuItems }: MenuControllerProps) {
   const { showToast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<MenuItemWithCalculations | null>(null);
+  const [editData, setEditData] = useState<MenuItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const handleEdit = (item: MenuItemWithCalculations) => {
+  const handleEdit = (item: MenuItem) => {
     setEditData(item);
     setIsModalOpen(true);
   };
@@ -74,13 +63,13 @@ export default function MenuController({ menuItems, ingredients }: MenuControlle
   return (
     <>
       <PageHeader
-        category="Product Management"
-        title="Daftar Menu Makanan"
-        description="Kelola harga jual dan pantau HPP setiap masakan."
+        category="Katalog Produk"
+        title="Daftar Menu"
+        description="Kelola daftar produk dan harga jual Anda."
         action={
           <Button onClick={handleAdd}>
             <Plus size={18} strokeWidth={2.5} />
-            BUAT MENU BARU
+            TAMBAH MENU
           </Button>
         }
       />
@@ -99,13 +88,13 @@ export default function MenuController({ menuItems, ingredients }: MenuControlle
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredItems.map((item) => (
-          <Card key={item.id} padding="none" className="group overflow-hidden flex flex-col h-full">
+          <Card key={item.id} padding="none" className="group overflow-hidden flex flex-col h-full hover:border-primary/20 transition-all">
             <div className="p-8 pb-4 flex-1">
               <div className="flex items-start justify-between mb-6">
                 <div className="h-16 w-16 rounded-[1.5rem] bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-300 group-hover:bg-primary/5 group-hover:border-primary/20 group-hover:text-primary transition-all duration-500">
                   <Utensils size={28} />
                 </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -125,65 +114,49 @@ export default function MenuController({ menuItems, ingredients }: MenuControlle
                 </div>
               </div>
 
-              <h3 className="text-2xl font-black text-zinc-900 mb-2 tracking-tight">{item.name}</h3>
-              <p className="text-sm font-bold text-zinc-400 leading-relaxed line-clamp-2 min-h-[40px]">
-                {item.description || "Tidak ada deskripsi resep untuk menu ini."}
-              </p>
+              <h3 className="text-2xl font-black text-zinc-900 mb-6 tracking-tight">{item.name}</h3>
 
-              <div className="mt-8 pt-8 border-t border-zinc-50 flex items-center justify-between">
+              <div className="pt-6 border-t border-zinc-50 flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest mb-1">Harga Jual</p>
                   <p className="text-xl font-black text-zinc-900 tracking-tighter">{formatCurrency(item.basePrice)}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest mb-1">HPP</p>
-                  <p className={cn(
-                    "text-xl font-black tracking-tighter",
-                    item.marginPercent < 20 ? "text-red-600" : "text-zinc-900"
-                  )}>
-                    {formatCurrency(item.hpp)}
-                  </p>
-                </div>
               </div>
             </div>
 
-            <div className="bg-zinc-50/50 p-6 flex items-center justify-between">
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Profit Margin</span>
-              <div className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black tracking-tight",
-                item.marginPercent >= 20 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-              )}>
-                {item.marginPercent >= 20 ? <TrendingUp size={12} /> : <TrendingUp size={12} className="rotate-180" />}
-                {item.marginPercent.toFixed(1)}%
+            <div className="bg-zinc-50/50 p-6 flex items-center justify-between border-t border-zinc-50">
+              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Terjual Hari Ini</span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white shadow-sm border border-zinc-100 text-[11px] font-black tracking-tight text-zinc-600">
+                <ShoppingBag size={12} className="text-primary" />
+                {item._count.sales} Porsi
               </div>
             </div>
           </Card>
         ))}
 
         {filteredItems.length === 0 && (
-          <div className="col-span-full py-32 text-center">
-            <div className="h-20 w-20 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-200 mx-auto mb-6">
+          <div className="col-span-full py-32 text-center bg-zinc-50/50 rounded-[3rem] border border-dashed border-zinc-200">
+            <div className="h-20 w-20 rounded-full bg-white shadow-sm flex items-center justify-center text-zinc-200 mx-auto mb-6">
               <Utensils size={40} />
             </div>
-            <h3 className="text-xl font-black text-zinc-900 mb-2">Menu Tidak Ditemukan</h3>
-            <p className="text-zinc-400 font-bold max-w-xs mx-auto">Silakan tambahkan menu masakan baru untuk mulai memantau HPP.</p>
+            <h3 className="text-xl font-black text-zinc-900 mb-2">Menu Kosong</h3>
+            <p className="text-zinc-400 font-bold max-w-xs mx-auto">Tambahkan menu baru untuk mulai menggunakan sistem kasir.</p>
           </div>
         )}
       </div>
 
-      <MenuModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        ingredients={ingredients}
+      <MenuModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
         editData={editData}
       />
 
-      <ConfirmModal
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
+      <ConfirmModal 
+        isOpen={isConfirmOpen} 
+        onClose={() => setIsConfirmOpen(false)} 
         onConfirm={handleDelete}
         title="Hapus Menu Makanan"
-        message="Apakah Anda yakin ingin menghapus menu ini? Data penjualan yang terkait dengan menu ini mungkin juga akan terpengaruh."
+        message="Apakah Anda yakin ingin menghapus menu ini? Semua histori penjualan terkait menu ini akan hilang."
       />
     </>
   );

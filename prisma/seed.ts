@@ -1,44 +1,53 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const hashedPassword = await bcrypt.hash('admin123', 10);
-  
-  const user = await prisma.user.upsert({
-    where: { username: 'admin' },
-    update: {},
-    create: {
-      username: 'admin',
+  // Bersihkan data lama untuk testing bersih
+  await prisma.sale.deleteMany();
+  await prisma.expense.deleteMany();
+  await prisma.menuItem.deleteMany();
+  await prisma.user.deleteMany();
+
+  console.log("Memulai seeding sistem profesional...");
+
+  // 1. Buat Akun OWNER (Admin Utama)
+  const hashedPassword = await bcrypt.hash("admin123", 10);
+  await prisma.user.create({
+    data: {
+      username: "admin",
       password: hashedPassword,
+      role: "OWNER",
+      fullName: "Administrator Salero",
     },
   });
 
-  console.log({ user });
-
-  // Add some sample ingredients
-  const beef = await prisma.ingredient.create({
+  // 2. Buat Beberapa Menu Awal
+  const rendang = await prisma.menuItem.create({
     data: {
-      name: 'Daging Sapi',
-      unit: 'kg',
-      pricePerUnit: 120000,
-      stock: 5,
-      minStock: 2,
+      name: "Nasi Rendang Spesial",
+      basePrice: 25000,
     },
   });
 
-  const rice = await prisma.ingredient.create({
+  const ayam = await prisma.menuItem.create({
     data: {
-      name: 'Beras',
-      unit: 'kg',
-      pricePerUnit: 15000,
-      stock: 25,
-      minStock: 10,
+      name: "Nasi Ayam Bakar",
+      basePrice: 20000,
     },
   });
 
-  console.log('Seed data created successfully');
+  // 3. Tambahkan Pengeluaran Awal (Opsional)
+  await prisma.expense.create({
+    data: {
+      description: "Belanja Pasar Mingguan",
+      amount: 500000,
+      category: "Belanja",
+    },
+  });
+
+  console.log("Seeding selesai! Akun 'admin' sekarang adalah OWNER dengan password 'admin123'.");
 }
 
 main()

@@ -5,22 +5,13 @@ import { revalidatePath } from "next/cache";
 
 export async function addMenuItem(data: {
   name: string;
-  description: string;
   basePrice: number;
-  recipes: { ingredientId: string; quantity: number }[];
 }) {
   try {
     await prisma.menuItem.create({
       data: {
         name: data.name,
-        description: data.description,
         basePrice: data.basePrice,
-        recipes: {
-          create: data.recipes.map(r => ({
-            ingredientId: r.ingredientId,
-            quantity: r.quantity
-          }))
-        }
       }
     });
 
@@ -35,30 +26,16 @@ export async function addMenuItem(data: {
 
 export async function updateMenuItem(id: string, data: {
   name: string;
-  description: string;
   basePrice: number;
-  recipes: { ingredientId: string; quantity: number }[];
 }) {
   try {
-    await prisma.$transaction([
-      prisma.recipeItem.deleteMany({
-        where: { menuItemId: id }
-      }),
-      prisma.menuItem.update({
-        where: { id },
-        data: {
-          name: data.name,
-          description: data.description,
-          basePrice: data.basePrice,
-          recipes: {
-            create: data.recipes.map(r => ({
-              ingredientId: r.ingredientId,
-              quantity: r.quantity
-            }))
-          }
-        }
-      })
-    ]);
+    await prisma.menuItem.update({
+      where: { id },
+      data: {
+        name: data.name,
+        basePrice: data.basePrice,
+      }
+    });
 
     revalidatePath("/menu");
     revalidatePath("/");

@@ -7,48 +7,49 @@ import {
   TrendingUp, 
   ShoppingCart, 
   DollarSign,
-  Package,
-  UtensilsCrossed
+  UtensilsCrossed,
+  ArrowUpRight,
+  ArrowDownRight
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { Card } from "@/components/ui/Card";
-import { calculateMenuHPP } from "@/lib/hpp";
+import { startOfDay, endOfDay } from "date-fns";
 
 async function getStats() {
-  const [salesData, menuItemsCount, ingredientsCount] = await Promise.all([
+  const today = new Date();
+  
+  const [salesData, expensesData, menuItemsCount] = await Promise.all([
     prisma.sale.findMany({
-      include: {
-        menuItem: {
-          include: {
-            recipes: {
-              include: { ingredient: true }
-            }
-          }
+      where: {
+        date: {
+          gte: startOfDay(today),
+          lte: endOfDay(today),
+        }
+      }
+    }),
+    prisma.expense.findMany({
+      where: {
+        date: {
+          gte: startOfDay(today),
+          lte: endOfDay(today),
         }
       }
     }),
     prisma.menuItem.count(),
-    prisma.ingredient.count(),
   ]);
 
   const totalRevenue = salesData.reduce((acc, sale) => acc + sale.totalPrice, 0);
-  
-  // Calculate Total HPP based on sales history
-  const totalHPP = salesData.reduce((acc, sale) => {
-    const hppPerUnit = calculateMenuHPP(sale.menuItem.recipes);
-    return acc + (hppPerUnit * sale.quantity);
-  }, 0);
-
-  const totalProfit = totalRevenue - totalHPP;
+  const totalExpenses = expensesData.reduce((acc, exp) => acc + exp.amount, 0);
+  const totalProfit = totalRevenue - totalExpenses;
 
   return {
     totalRevenue,
+    totalExpenses,
     totalProfit,
     salesCount: salesData.length,
     menuItemsCount,
-    ingredientsCount
   };
 }
 
@@ -59,6 +60,11 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  // Security: If not OWNER, redirect to Sales (Cashier)
+  if ((session.user as any).role !== "OWNER") {
+    redirect("/sales");
+  }
+
   const stats = await getStats();
 
   return (
@@ -67,105 +73,104 @@ export default async function DashboardPage() {
       
       <main className="p-8 lg:p-12 max-w-[1600px] mx-auto animate-in">
         <PageHeader 
-          category="Ringkasan Dashboard"
+          category="Ringkasan Arus Kas"
           title={`Halo, ${session.user?.name}! 👋`}
-          description="Pantau performa penjualan dan keuntungan restoran Anda hari ini."
+          description="Pantau keuntungan bersih hari ini berdasarkan omzet dan biaya belanja."
         />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <StatCard 
-            title="Total Omzet" 
+            title="Omzet Hari Ini" 
             value={formatCurrency(stats.totalRevenue)} 
             icon={<DollarSign size={24} />}
-            trend={{ value: 12, isUp: true }}
+            trend={{ value: 100, isUp: true }}
           />
           <StatCard 
-            title="Total Keuntungan" 
+            title="Biaya Belanja" 
+            value={formatCurrency(stats.totalExpenses)} 
+            icon={<ArrowDownRight size={24} />}
+            variant="zinc"
+          />
+          <StatCard 
+            title="Untung Bersih" 
             value={formatCurrency(stats.totalProfit)} 
             icon={<TrendingUp size={24} />}
-            trend={{ value: 8, isUp: true }}
             variant="primary"
+            trend={{ value: 100, isUp: stats.totalProfit >= 0 }}
           />
           <StatCard 
             title="Menu Terjual" 
             value={stats.salesCount.toString()} 
             icon={<ShoppingCart size={24} />}
           />
-          <StatCard 
-            title="Total Menu" 
-            value={stats.menuItemsCount.toString()} 
-            icon={<UtensilsCrossed size={24} />}
-          />
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
-          {/* Quick Actions / Info */}
+          {/* Main Visual Logic */}
           <Card className="xl:col-span-2">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-extrabold text-zinc-900 tracking-tight">Performa Menu</h3>
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Live Data</span>
+            <div className="flex items-center justify-between mb-12">
+              <div>
+                <h3 className="text-2xl font-black text-zinc-900 tracking-tight">Kesehatan Bisnis</h3>
+                <p className="text-sm font-bold text-zinc-400 mt-1">Perbandingan Pemasukan vs Pengeluaran Hari Ini.</p>
+              </div>
             </div>
-            
-            <div className="space-y-6">
-              <div className="p-8 rounded-[2.5rem] bg-zinc-50 border border-zinc-100 flex items-center justify-between group hover:border-primary/20 transition-all">
-                <div className="flex items-center gap-6">
-                  <div className="h-14 w-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                    <Package size={24} />
+
+            <div className="space-y-12">
+              {/* Revenue Progress */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+                      <ArrowUpRight size={18} strokeWidth={3} />
+                    </div>
+                    <span className="text-sm font-black text-zinc-600 uppercase tracking-widest">Pemasukan (Sales)</span>
                   </div>
-                  <div>
-                    <h4 className="text-lg font-extrabold text-zinc-900 tracking-tight">Data Bahan Baku</h4>
-                    <p className="text-sm font-bold text-zinc-400">Terdapat {stats.ingredientsCount} bahan baku terdaftar.</p>
-                  </div>
+                  <span className="font-black text-zinc-900">{formatCurrency(stats.totalRevenue)}</span>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-black text-zinc-900 tracking-tighter">{stats.ingredientsCount}</p>
-                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Items</p>
+                <div className="h-4 w-full bg-zinc-50 rounded-full overflow-hidden border border-zinc-100 p-1">
+                  <div 
+                    className="h-full bg-green-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(34,197,94,0.4)]" 
+                    style={{ width: stats.totalRevenue > 0 ? '100%' : '0%' }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Expense Progress */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                      <ArrowDownRight size={18} strokeWidth={3} />
+                    </div>
+                    <span className="text-sm font-black text-zinc-600 uppercase tracking-widest">Pengeluaran (Belanja)</span>
+                  </div>
+                  <span className="font-black text-zinc-900">{formatCurrency(stats.totalExpenses)}</span>
+                </div>
+                <div className="h-4 w-full bg-zinc-50 rounded-full overflow-hidden border border-zinc-100 p-1">
+                  <div 
+                    className="h-full bg-red-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(239,68,68,0.4)]" 
+                    style={{ width: `${Math.min((stats.totalExpenses / (stats.totalRevenue || 1)) * 100, 100)}%` }}
+                  ></div>
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Activity Feed */}
           <Card className="xl:col-span-1">
-            <h3 className="text-xl font-extrabold text-zinc-900 mb-10 tracking-tight">Aktivitas Terbaru</h3>
-            <div className="space-y-10">
-              <ActivityItem 
-                title="Sistem Siap" 
-                time="Sekarang" 
-                description="Database dan sistem HPP Salero telah dikonfigurasi." 
-              />
-              <ActivityItem 
-                title="Update Komponen" 
-                time="Tadi" 
-                description="Sistem stok telah dinonaktifkan untuk fokus pada keuntungan." 
-              />
+            <h3 className="text-xl font-black text-zinc-900 mb-10 tracking-tight">Status Operasional</h3>
+            <div className="p-8 rounded-[2.5rem] bg-zinc-50 border border-zinc-100 text-center">
+              <div className="h-20 w-20 rounded-[2rem] bg-white shadow-xl shadow-zinc-200/50 flex items-center justify-center text-primary mx-auto mb-6">
+                <UtensilsCrossed size={40} />
+              </div>
+              <h4 className="text-lg font-black text-zinc-900 mb-2">{stats.menuItemsCount} Menu Aktif</h4>
+              <p className="text-xs font-bold text-zinc-400 leading-relaxed px-4">
+                Sistem menghitung keuntungan berdasarkan selisih penjualan dan biaya belanja pasar Anda hari ini.
+              </p>
             </div>
           </Card>
         </div>
       </main>
-    </div>
-  );
-}
-
-interface ActivityItemProps {
-  title: string;
-  time: string;
-  description: string;
-}
-
-function ActivityItem({ title, time, description }: ActivityItemProps) {
-  return (
-    <div className="relative pl-10 group/item">
-      <div className="absolute left-0 top-0 h-10 w-10 rounded-full bg-white border border-zinc-100 shadow-sm flex items-center justify-center z-10 group-hover/item:border-primary/30 transition-colors">
-        <div className="h-2 w-2 rounded-full bg-primary group-hover/item:scale-150 transition-transform"></div>
-      </div>
-      <div className="absolute left-[19px] top-10 h-full w-[2px] bg-zinc-50 last:hidden"></div>
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold text-zinc-900 tracking-tight">{title}</h4>
-        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 px-2 py-1 rounded-md">{time}</span>
-      </div>
-      <p className="text-sm font-bold text-zinc-500 leading-relaxed">{description}</p>
     </div>
   );
 }

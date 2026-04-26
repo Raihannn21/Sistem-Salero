@@ -3,34 +3,30 @@ import { authOptions } from "../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import Navigation from "@/components/Navigation";
 import { prisma } from "@/lib/prisma";
-import MenuController from "@/components/MenuController";
+import EmployeeController from "@/components/EmployeeController";
 
-export default async function MenuPage() {
+export default async function EmployeesPage() {
   const session = await getServerSession(authOptions);
 
+  // Security: Only Owner can access this page
   if (!session) {
     redirect("/login");
   }
 
   if ((session.user as any).role !== "OWNER") {
-    redirect("/sales");
+    redirect("/sales"); // Employees redirected to Sales
   }
 
-  // Fetch only menu items and their sales count
-  const menuItems = await prisma.menuItem.findMany({
-    include: {
-      _count: {
-        select: { sales: true }
-      }
-    },
-    orderBy: { name: 'asc' }
+  const employees = await prisma.user.findMany({
+    where: { role: "EMPLOYEE" },
+    orderBy: { createdAt: 'desc' }
   });
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] lg:pl-72">
       <Navigation />
       <main className="p-8 lg:p-12 max-w-[1600px] mx-auto animate-in">
-        <MenuController menuItems={menuItems} />
+        <EmployeeController employees={employees} />
       </main>
     </div>
   );

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Modal } from "./ui/Modal";
-import { Input } from "./ui/Input";
+import Modal from "./ui/Modal";
+import Input from "./ui/Input";
 import { Button } from "./ui/Button";
 import { Package, DollarSign, Scale, Layers } from "lucide-react";
 import { addIngredient, updateIngredient } from "@/actions/ingredients";

@@ -11,9 +11,15 @@ import { recordSale } from "@/actions/sales";
 import { useToast } from "./ui/Toast";
 import { useRouter } from "next/navigation";
 
+import { MenuItem, Sale } from "@prisma/client";
+
+interface SaleWithMenu extends Sale {
+  menuItem: MenuItem;
+}
+
 interface SalesControllerProps {
-  menuItems: any[];
-  recentSales: any[];
+  menuItems: MenuItem[];
+  recentSales: SaleWithMenu[];
 }
 
 export default function SalesController({ menuItems, recentSales }: SalesControllerProps) {

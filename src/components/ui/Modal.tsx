@@ -14,7 +14,7 @@ interface ModalProps {
   className?: string;
 }
 
-export const Modal = ({ isOpen, onClose, title, children, className }: ModalProps) => {
+const Modal = ({ isOpen, onClose, title, children, className }: ModalProps) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -61,3 +61,5 @@ export const Modal = ({ isOpen, onClose, title, children, className }: ModalProp
     document.body
   );
 };
+
+export default Modal;

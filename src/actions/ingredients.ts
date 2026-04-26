@@ -63,9 +63,10 @@ export async function updateIngredient(id: string, data: {
     revalidatePath("/menu");
     revalidatePath("/");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating ingredient detail:", error);
-    return { success: false, error: error.message || "Gagal memperbarui bahan baku." };
+    const errorMessage = error instanceof Error ? error.message : "Gagal memperbarui bahan baku.";
+    return { success: false, error: errorMessage };
   }
 }
 

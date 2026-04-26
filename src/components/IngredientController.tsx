@@ -132,11 +132,11 @@ export default function IngredientController({ ingredients }: IngredientControll
                   </td>
                   <td className="px-8 py-6 text-zinc-900 font-black tracking-tight">{formatCurrency(item.pricePerUnit)}</td>
                   <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-end gap-2">
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="p-2 h-10 w-10 rounded-xl text-zinc-400 hover:text-primary hover:bg-primary/5"
+                        className="p-2 h-10 w-10 rounded-xl text-zinc-400 hover:text-primary hover:bg-primary/5 border border-zinc-100 bg-white"
                         onClick={() => handleEdit(item)}
                       >
                         <Edit2 size={18} />
@@ -144,7 +144,7 @@ export default function IngredientController({ ingredients }: IngredientControll
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="p-2 h-10 w-10 rounded-xl text-zinc-400 hover:text-red-500 hover:bg-red-50"
+                        className="p-2 h-10 w-10 rounded-xl text-zinc-400 hover:text-red-500 hover:bg-red-50 border border-zinc-100 bg-white"
                         onClick={() => openDeleteConfirm(item.id)}
                       >
                         <Trash2 size={18} />

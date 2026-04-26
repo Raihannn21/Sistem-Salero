@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/Button";
 import { completeTransaction } from "@/actions/sales";
 import { useToast } from "./ui/Toast";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import ReceiptModal from "./ReceiptModal";
 
 import { MenuItem } from "@prisma/client";
 
@@ -24,11 +26,16 @@ interface SalesControllerProps {
 export default function SalesController({ menuItems }: SalesControllerProps) {
   const { showToast } = useToast();
   const router = useRouter();
+  const { data: session } = useSession();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "QRIS">("CASH");
+
+  // Receipt State
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [receiptData, setReceiptData] = useState<any>(null);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -82,18 +89,29 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
     if (cart.length === 0) return;
     setLoading(true);
 
-    const items = cart.map(item => ({
+    const itemsForAction = cart.map(item => ({
       menuItemId: item.id,
       quantity: item.quantity
     }));
 
     try {
-      const result = await completeTransaction(items, paymentMethod);
+      const result = await completeTransaction(itemsForAction, paymentMethod);
       if (result.success) {
-        showToast("PESANAN BERHASIL DISIMPAN!", "success");
+        // Set Receipt Data for display
+        setReceiptData({
+          id: result.transactionId,
+          date: new Date(),
+          items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price * i.quantity })),
+          totalAmount: totalAmount,
+          paymentMethod: paymentMethod,
+          cashierName: (session?.user as any)?.fullName || (session?.user as any)?.username || "Kasir"
+        });
+        
+        setIsReceiptOpen(true);
         setCart([]);
         setIsMobileCartOpen(false);
-        setPaymentMethod("CASH"); // Reset to default
+        setPaymentMethod("CASH");
+        showToast("TRANSAKSI BERHASIL!", "success");
       } else {
         showToast(result.error || "Gagal memproses pesanan.", "error");
       }
@@ -237,6 +255,13 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
           </div>
         </div>
       </div>
+
+      {/* Receipt Modal */}
+      <ReceiptModal 
+        isOpen={isReceiptOpen}
+        onClose={() => setIsReceiptOpen(false)}
+        data={receiptData}
+      />
     </>
   );
 }

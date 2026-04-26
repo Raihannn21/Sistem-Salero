@@ -35,7 +35,7 @@ export async function completeTransaction(items: { menuItemId: string, quantity:
 
     if (salesData.length === 0) return { success: false, error: "Keranjang kosong." };
 
-    await prisma.transaction.create({
+    const transaction = await prisma.transaction.create({
       data: {
         totalAmount,
         userId,
@@ -50,7 +50,7 @@ export async function completeTransaction(items: { menuItemId: string, quantity:
     revalidatePath("/sales/history");
     revalidatePath("/");
     
-    return { success: true };
+    return { success: true, transactionId: transaction.id };
   } catch (error) {
     console.error("Error completing transaction:", error);
     return { success: false, error: "Gagal memproses pesanan." };

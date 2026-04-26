@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Modal from "./ui/Modal";
 import { Button } from "./ui/Button";
-import { Plus, ShoppingBag, Calendar, DollarSign, ArrowRight } from "lucide-react";
+import { ShoppingBag, DollarSign } from "lucide-react";
 import { addExpense } from "@/actions/expenses";
 import { useToast } from "./ui/Toast";
+import DatePicker from "./ui/DatePicker";
 import { format } from "date-fns";
 
 interface ExpenseModalProps {
@@ -17,8 +18,22 @@ export default function ExpenseModal({ isOpen, onClose }: ExpenseModalProps) {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(""); // Raw numeric string
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  // Helper to format currency display (with dots)
+  const formatDisplayAmount = (value: string) => {
+    if (!value) return "";
+    const number = parseInt(value.replace(/\D/g, ""));
+    if (isNaN(number)) return "";
+    return number.toLocaleString("id-ID");
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Remove all non-digits to get raw value
+    const rawValue = e.target.value.replace(/\D/g, "");
+    setAmount(rawValue);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,20 +66,16 @@ export default function ExpenseModal({ isOpen, onClose }: ExpenseModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Catat Pengeluaran Baru">
       <form onSubmit={handleSubmit} className="space-y-8 p-2">
+        {/* Input Tanggal Kustom */}
         <div className="space-y-3">
-          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Kapan Pengeluaran Ini?</label>
-          <div className="relative group">
-            <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={20} />
-            <input 
-              type="date" 
-              className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-4 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-            />
-          </div>
+          <DatePicker 
+            label="Kapan Pengeluaran Ini?"
+            value={date}
+            onChange={(val) => setDate(val)}
+          />
         </div>
 
+        {/* Keterangan */}
         <div className="space-y-3">
           <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Keterangan / Nama Barang</label>
           <div className="relative group">
@@ -80,19 +91,31 @@ export default function ExpenseModal({ isOpen, onClose }: ExpenseModalProps) {
           </div>
         </div>
 
+        {/* Nominal dengan Auto-Format Titik */}
         <div className="space-y-3">
           <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nominal Biaya (IDR)</label>
           <div className="relative group">
             <DollarSign className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={20} />
             <input 
-              type="number" 
+              type="text" // Change to text for formatting
+              inputMode="numeric"
               placeholder="0"
-              className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-4 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold placeholder:text-zinc-300"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-4 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold placeholder:text-zinc-300 tabular-nums"
+              value={formatDisplayAmount(amount)}
+              onChange={handleAmountChange}
               required
             />
+            {amount && (
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary/40 uppercase tracking-widest">
+                IDR
+              </div>
+            )}
           </div>
+          {amount && parseInt(amount) >= 1000000 && (
+            <p className="text-[10px] font-bold text-zinc-400 ml-1 mt-1 italic">
+              Terbaca: Rp {(parseInt(amount) / 1000000).toFixed(1)} Juta
+            </p>
+          )}
         </div>
 
         <div className="flex gap-4 pt-4">

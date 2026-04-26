@@ -80,7 +80,7 @@ export default function DatePicker({ value, onChange, placeholder = "Pilih tangg
       <div 
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-full bg-white border border-zinc-100 text-zinc-900 pl-14 pr-6 py-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 shadow-sm hover:border-primary/20",
+          "relative w-full bg-white border border-zinc-100 text-zinc-900 pl-14 pr-6 py-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 shadow-sm hover:border-primary/20",
           isOpen ? "ring-4 ring-primary/5 border-primary/20" : ""
         )}
       >

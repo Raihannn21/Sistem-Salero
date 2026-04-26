@@ -21,7 +21,7 @@ export default function MenuModal({ isOpen, onClose, editData }: MenuModalProps)
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
-  const [basePrice, setBasePrice] = useState("");
+  const [basePrice, setBasePrice] = useState(""); // Raw numeric string
 
   useEffect(() => {
     if (editData) {
@@ -33,8 +33,23 @@ export default function MenuModal({ isOpen, onClose, editData }: MenuModalProps)
     }
   }, [editData, isOpen]);
 
+  // Helper to format currency display (with dots)
+  const formatDisplayAmount = (value: string) => {
+    if (!value) return "";
+    const number = parseInt(value.replace(/\D/g, ""));
+    if (isNaN(number)) return "";
+    return number.toLocaleString("id-ID");
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\D/g, "");
+    setBasePrice(rawValue);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name || !basePrice) return;
+    
     setLoading(true);
 
     const data = {
@@ -84,15 +99,23 @@ export default function MenuModal({ isOpen, onClose, editData }: MenuModalProps)
             icon={<Utensils size={18} />}
             required
           />
-          <Input 
-            label="Harga Jual (IDR)" 
-            type="number" 
-            placeholder="Contoh: 25000" 
-            value={basePrice} 
-            onChange={(e) => setBasePrice(e.target.value)}
-            icon={<DollarSign size={18} />}
-            required
-          />
+          <div className="space-y-1">
+            <Input 
+              label="Harga Jual (IDR)" 
+              type="text" // Text for formatting
+              inputMode="numeric"
+              placeholder="Contoh: 25.000" 
+              value={formatDisplayAmount(basePrice)} 
+              onChange={handlePriceChange}
+              icon={<DollarSign size={18} />}
+              required
+            />
+            {basePrice && parseInt(basePrice) >= 1000000 && (
+              <p className="text-[10px] font-bold text-primary ml-1 mt-2 italic animate-in fade-in slide-in-from-top-1">
+                Terbaca: Rp {(parseInt(basePrice) / 1000000).toFixed(1)} Juta
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-4 pt-6 border-t border-zinc-50">

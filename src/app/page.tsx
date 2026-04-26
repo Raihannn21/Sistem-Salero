@@ -5,36 +5,49 @@ import Navigation from "@/components/Navigation";
 import { prisma } from "@/lib/prisma";
 import { 
   TrendingUp, 
-  AlertTriangle, 
   ShoppingCart, 
   DollarSign,
-  ArrowUpRight,
   Package,
   UtensilsCrossed
 } from "lucide-react";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatCard } from "@/components/ui/StatCard";
+import { Card } from "@/components/ui/Card";
+import { calculateMenuHPP } from "@/lib/hpp";
 
 async function getStats() {
-  const [salesCount, ingredients, ingredientsCount] = await Promise.all([
-    prisma.sale.count(),
-    prisma.ingredient.findMany({
-      select: { stock: true, minStock: true }
+  const [salesData, menuItemsCount, ingredientsCount] = await Promise.all([
+    prisma.sale.findMany({
+      include: {
+        menuItem: {
+          include: {
+            recipes: {
+              include: { ingredient: true }
+            }
+          }
+        }
+      }
     }),
+    prisma.menuItem.count(),
     prisma.ingredient.count(),
   ]);
 
-  const lowStockCount = ingredients.filter(i => i.stock <= i.minStock).length;
-
-  const salesData = await prisma.sale.findMany({
-    select: { totalPrice: true },
-  });
-
   const totalRevenue = salesData.reduce((acc, sale) => acc + sale.totalPrice, 0);
+  
+  // Calculate Total HPP based on sales history
+  const totalHPP = salesData.reduce((acc, sale) => {
+    const hppPerUnit = calculateMenuHPP(sale.menuItem.recipes);
+    return acc + (hppPerUnit * sale.quantity);
+  }, 0);
+
+  const totalProfit = totalRevenue - totalHPP;
 
   return {
     totalRevenue,
-    salesCount,
-    lowStockCount,
+    totalProfit,
+    salesCount: salesData.length,
+    menuItemsCount,
     ingredientsCount
   };
 }
@@ -53,68 +66,69 @@ export default async function DashboardPage() {
       <Navigation />
       
       <main className="p-8 lg:p-12 max-w-[1600px] mx-auto animate-in">
-        <header className="mb-12 flex flex-col gap-3">
-          <div className="flex items-center gap-3 text-primary/60 font-black text-[10px] uppercase tracking-[0.3em]">
-            <div className="h-[2px] w-8 bg-primary/40"></div>
-            Ringkasan Dashboard
-          </div>
-          <h1 className="text-3xl lg:text-4xl font-extrabold text-zinc-900 tracking-tight leading-tight">
-            Halo, {session.user?.name}! 👋
-          </h1>
-          <p className="text-zinc-500 font-semibold text-base">
-            Berikut adalah performa Salero hari ini.
-          </p>
-        </header>
+        <PageHeader 
+          category="Ringkasan Dashboard"
+          title={`Halo, ${session.user?.name}! 👋`}
+          description="Pantau performa penjualan dan keuntungan restoran Anda hari ini."
+        />
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <StatCard 
-            title="Total Pendapatan" 
+            title="Total Omzet" 
             value={formatCurrency(stats.totalRevenue)} 
-            icon={<DollarSign size={24} />} 
-            trend="+12%"
-            color="primary"
+            icon={<DollarSign size={24} />}
+            trend={{ value: 12, isUp: true }}
           />
           <StatCard 
-            title="Total Penjualan" 
+            title="Total Keuntungan" 
+            value={formatCurrency(stats.totalProfit)} 
+            icon={<TrendingUp size={24} />}
+            trend={{ value: 8, isUp: true }}
+            variant="primary"
+          />
+          <StatCard 
+            title="Menu Terjual" 
             value={stats.salesCount.toString()} 
-            icon={<ShoppingCart size={24} />} 
-            color="primary"
+            icon={<ShoppingCart size={24} />}
           />
           <StatCard 
-            title="Stok Rendah" 
-            value={stats.lowStockCount.toString()} 
-            icon={<AlertTriangle size={24} />} 
-            description="Perlu belanja segera"
-            color={stats.lowStockCount > 0 ? "maroon" : "zinc"}
-          />
-          <StatCard 
-            title="Total Bahan" 
-            value={stats.ingredientsCount.toString()} 
-            icon={<Package size={24} />} 
-            color="zinc"
+            title="Total Menu" 
+            value={stats.menuItemsCount.toString()} 
+            icon={<UtensilsCrossed size={24} />}
           />
         </div>
 
-        {/* Action Sections */}
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-          <section className="bg-white rounded-[2.5rem] p-10 border border-zinc-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all">
-            <div className="mb-8 flex items-center justify-between">
-              <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">Menu Terlaris</h2>
-              <button className="text-sm font-black text-primary hover:tracking-widest transition-all">LIHAT SEMUA</button>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
+          {/* Quick Actions / Info */}
+          <Card className="xl:col-span-2">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-extrabold text-zinc-900 tracking-tight">Performa Menu</h3>
+              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Live Data</span>
             </div>
-            <div className="space-y-4">
-              <div className="p-8 rounded-3xl bg-zinc-50 border border-dashed border-zinc-200 flex flex-col items-center text-center">
-                <UtensilsCrossed className="text-zinc-300 mb-4" size={32} />
-                <p className="text-zinc-400 text-sm font-bold">Belum ada data penjualan hari ini.</p>
+            
+            <div className="space-y-6">
+              <div className="p-8 rounded-[2.5rem] bg-zinc-50 border border-zinc-100 flex items-center justify-between group hover:border-primary/20 transition-all">
+                <div className="flex items-center gap-6">
+                  <div className="h-14 w-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <Package size={24} />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-extrabold text-zinc-900 tracking-tight">Data Bahan Baku</h4>
+                    <p className="text-sm font-bold text-zinc-400">Terdapat {stats.ingredientsCount} bahan baku terdaftar.</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black text-zinc-900 tracking-tighter">{stats.ingredientsCount}</p>
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Items</p>
+                </div>
               </div>
             </div>
-          </section>
+          </Card>
 
-          <section className="bg-white rounded-[2.5rem] p-10 border border-zinc-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all">
-            <div className="mb-8 flex items-center justify-between">
-              <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">Log Aktivitas</h2>
-            </div>
+          {/* Activity Feed */}
+          <Card className="xl:col-span-1">
+            <h3 className="text-xl font-extrabold text-zinc-900 mb-10 tracking-tight">Aktivitas Terbaru</h3>
             <div className="space-y-10">
               <ActivityItem 
                 title="Sistem Siap" 
@@ -122,46 +136,25 @@ export default async function DashboardPage() {
                 description="Database dan sistem HPP Salero telah dikonfigurasi." 
               />
               <ActivityItem 
-                title="Input Bahan Baku" 
+                title="Update Komponen" 
                 time="Tadi" 
-                description="Menambahkan 2 bahan baku awal (Beef, Beras)." 
+                description="Sistem stok telah dinonaktifkan untuk fokus pada keuntungan." 
               />
             </div>
-          </section>
+          </Card>
         </div>
       </main>
     </div>
   );
 }
 
-function StatCard({ title, value, icon, trend, description, color }: any) {
-  return (
-    <div className="group relative overflow-hidden rounded-[2.5rem] bg-white p-8 border border-zinc-50 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04)] transition-all hover:shadow-[0_20px_60px_-10px_rgba(128,0,0,0.08)] hover:-translate-y-1">
-      <div className="mb-6 flex items-center justify-between">
-        <div className={cn(
-          "flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-500",
-          color === "primary" || color === "maroon" ? "bg-primary text-white shadow-xl shadow-primary/20 rotate-3 group-hover:rotate-0" : "bg-zinc-50 text-zinc-400 border border-zinc-100"
-        )}>
-          {icon}
-        </div>
-        {trend && (
-          <span className="flex items-center gap-1.5 text-xs font-black text-primary bg-primary/5 px-3 py-1.5 rounded-full">
-            <TrendingUp size={14} strokeWidth={3} />
-            {trend}
-          </span>
-        )}
-      </div>
-      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">{title}</p>
-      <h3 className="text-2xl font-extrabold text-zinc-900 mt-2 tracking-tight leading-none group-hover:text-primary transition-colors">{value}</h3>
-      {description && <div className="mt-4 text-xs font-bold text-zinc-400 flex items-center gap-2">
-        <div className="h-1 w-1 rounded-full bg-primary/40"></div>
-        {description}
-      </div>}
-    </div>
-  );
+interface ActivityItemProps {
+  title: string;
+  time: string;
+  description: string;
 }
 
-function ActivityItem({ title, time, description }: any) {
+function ActivityItem({ title, time, description }: ActivityItemProps) {
   return (
     <div className="relative pl-10 group/item">
       <div className="absolute left-0 top-0 h-10 w-10 rounded-full bg-white border border-zinc-100 shadow-sm flex items-center justify-center z-10 group-hover/item:border-primary/30 transition-colors">

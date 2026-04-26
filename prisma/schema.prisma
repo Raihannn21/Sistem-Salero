@@ -19,15 +19,15 @@ model User {
 }
 
 model Ingredient {
-  id           String       @id @default(cuid())
-  name         String
-  unit         String       // e.g., "kg", "gram", "bungkus"
-  pricePerUnit Float        // Price per unit defined above
-  stock        Float        @default(0)
-  minStock     Float        @default(0)
-  recipes      RecipeItem[]
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id               String       @id @default(cuid())
+  name             String
+  unit             String       // Purchase Unit, e.g., "kg", "box"
+  pricePerUnit     Float        // Price per purchase unit
+  recipeUnit       String?      // Recipe Unit, e.g., "potong", "biji", "sendok"
+  recipeYield      Float        @default(1) // How many recipe units in one purchase unit
+  recipes          RecipeItem[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 }
 
 model MenuItem {

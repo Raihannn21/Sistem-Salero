@@ -7,25 +7,25 @@ import {
   UtensilsCrossed, 
   Package, 
   ShoppingCart, 
-  TrendingUp, 
-  Settings,
-  LogOut
+  LogOut,
+  Menu as MenuIcon,
+  X
 } from "lucide-react";
+import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/Button";
 
-const navItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Menu", href: "/menu", icon: UtensilsCrossed },
-  { name: "Bahan Baku", href: "/ingredients", icon: Package },
-  { name: "Penjualan", href: "/sales", icon: ShoppingCart },
-  { name: "Laporan", href: "/reports", icon: TrendingUp },
+const NAV_ITEMS = [
+  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Manajemen Menu", href: "/menu", icon: UtensilsCrossed },
+  { label: "Stok Bahan", href: "/ingredients", icon: Package },
+  { label: "Penjualan", href: "/sales", icon: ShoppingCart },
 ];
 
 export default function Navigation() {
   const pathname = usePathname();
-
-  if (pathname === "/login") return null;
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -41,10 +41,9 @@ export default function Navigation() {
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 mt-1">HPP System</span>
           </div>
         </div>
-        
-        <nav className="space-y-1.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
+
+        <nav className="space-y-2">
+          {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -53,50 +52,69 @@ export default function Navigation() {
                 className={cn(
                   "group flex items-center gap-3.5 rounded-2xl px-5 py-4 text-sm font-bold transition-all duration-300",
                   isActive 
-                    ? "bg-white text-primary shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-zinc-100" 
-                    : "text-zinc-400 hover:text-zinc-900 hover:bg-white/60"
+                    ? "bg-white text-primary shadow-xl shadow-zinc-200/40 border border-zinc-100" 
+                    : "text-zinc-400 hover:bg-primary/5 hover:text-primary border border-transparent hover:border-primary/10"
                 )}
               >
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className={cn("transition-transform group-hover:scale-110", isActive && "text-primary")} />
-                {item.name}
+                <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={cn("transition-colors", isActive ? "text-primary" : "text-zinc-300 group-hover:text-primary")} />
+                {item.label}
               </Link>
             );
           })}
         </nav>
- 
+
         <div className="absolute bottom-10 left-8 right-8">
           <button 
             onClick={() => signOut()}
             className="group flex w-full items-center gap-3.5 rounded-2xl px-5 py-4 text-sm font-bold text-zinc-400 transition-all hover:bg-primary/5 hover:text-primary border border-transparent hover:border-primary/10"
           >
-            <div className="p-2 rounded-xl bg-zinc-50 group-hover:bg-primary/10 transition-colors">
-              <LogOut size={18} />
-            </div>
+            <LogOut size={20} className="text-zinc-300 group-hover:text-primary transition-colors" />
             Keluar
           </button>
         </div>
       </aside>
- 
-      {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-6 left-6 right-6 z-50 flex h-20 items-center justify-around rounded-[2rem] border border-white/50 bg-white/70 px-4 backdrop-blur-2xl shadow-2xl lg:hidden">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1.5 transition-all w-14 h-14 rounded-2xl",
-                isActive ? "text-primary bg-primary/5 shadow-inner" : "text-zinc-400"
-              )}
-            >
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[10px] font-black uppercase tracking-wider">{item.name.substring(0, 4)}</span>
-            </Link>
-          );
-        })}
-      </nav>
+
+      {/* Mobile Nav Header */}
+      <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between bg-white/80 p-4 backdrop-blur-xl lg:hidden border-b border-zinc-100">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center font-black text-white text-sm shadow-lg shadow-primary/20">S</div>
+          <span className="font-black text-zinc-900 tracking-tight">Salero</span>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)} className="p-2">
+          {isOpen ? <X size={24} /> : <MenuIcon size={24} />}
+        </Button>
+      </div>
+
+      {/* Mobile Drawer Overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm lg:hidden" onClick={() => setIsOpen(false)}>
+          <div className="absolute right-0 top-0 h-full w-72 bg-white p-8 shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+            <nav className="mt-12 space-y-4">
+              {NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={cn(
+                    "flex items-center gap-4 rounded-2xl px-6 py-4 font-bold transition-all",
+                    pathname === item.href ? "bg-primary text-white shadow-xl shadow-primary/20" : "text-zinc-500 hover:bg-zinc-50"
+                  )}
+                >
+                  <item.icon size={20} />
+                  {item.label}
+                </Link>
+              ))}
+              <button 
+                onClick={() => signOut()}
+                className="flex w-full items-center gap-4 rounded-2xl px-6 py-4 font-bold text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-all"
+              >
+                <LogOut size={20} />
+                Keluar
+              </button>
+            </nav>
+          </div>
+        </div>
+      )}
     </>
   );
 }

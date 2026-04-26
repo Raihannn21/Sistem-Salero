@@ -96,3 +96,12 @@ a {
 ::-webkit-scrollbar-thumb:hover {
   background: #d4d4d8;
 }
+
+@keyframes toastProgress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.animate-toast-progress {
+  animation: toastProgress 4s linear forwards;
+}

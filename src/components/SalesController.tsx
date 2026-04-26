@@ -78,7 +78,6 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
       if (result.success) {
         showToast("Pesanan berhasil disimpan!", "success");
         setCart([]);
-        router.push("/sales/history");
       } else {
         showToast(result.error || "Gagal memproses pesanan.", "error");
       }

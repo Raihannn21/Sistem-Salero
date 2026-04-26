@@ -15,11 +15,14 @@ export default async function SalesHistoryPage() {
   const userRole = (session.user as any).role;
   const userId = (session.user as any).id;
 
-  const [sales, menuItems] = await Promise.all([
-    prisma.sale.findMany({
+  // Mengambil data Transaksi (Nota), bukan per Sale (Item)
+  const [transactions, menuItems] = await Promise.all([
+    prisma.transaction.findMany({
       where: userRole === "OWNER" ? {} : { userId },
       include: { 
-        menuItem: true,
+        sales: {
+          include: { menuItem: true }
+        },
         user: {
           select: { username: true, fullName: true }
         }
@@ -34,7 +37,7 @@ export default async function SalesHistoryPage() {
       <Navigation />
       
       <main className="p-8 lg:p-12 max-w-[1600px] mx-auto animate-in">
-        <SalesHistoryController initialSales={sales} menuItems={menuItems} />
+        <SalesHistoryController initialTransactions={transactions} menuItems={menuItems} />
       </main>
     </div>
   );

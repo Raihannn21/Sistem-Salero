@@ -15,7 +15,7 @@ import {
   History,
   Users
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { ConfirmModal } from "./ui/ConfirmModal";
@@ -39,6 +39,15 @@ export default function Navigation() {
   const isLoading = status === "loading";
   const userRole = (session?.user as any)?.role;
   const visibleItems = NAV_ITEMS.filter(item => userRole && item.roles.includes(userRole));
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [isOpen]);
 
   const handleLogout = () => {
     setIsLogoutOpen(true);
@@ -75,7 +84,7 @@ export default function Navigation() {
           {/* Navigation Items */}
           <nav className="flex-1 px-6 space-y-1.5 overflow-y-auto custom-scrollbar">
             {isLoading ? (
-              <div className="space-y-1.5 animate-in fade-in duration-500">
+              <div className="space-y-1.5">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="h-14 w-full bg-zinc-900/50 rounded-2xl animate-pulse" />
                 ))}
@@ -113,10 +122,10 @@ export default function Navigation() {
           <div className="p-8 mt-auto border-t border-zinc-900">
             <button 
               onClick={handleLogout}
-              className="flex items-center gap-4 w-full px-6 py-4 rounded-2xl text-zinc-500 hover:text-rose-500 hover:bg-rose-500/5 transition-all font-bold text-sm"
+              className="flex items-center gap-4 w-full px-6 py-4 rounded-2xl text-zinc-500 hover:text-rose-500 hover:bg-rose-500/5 transition-all font-bold text-sm uppercase tracking-widest"
             >
               <LogOut size={20} />
-              Keluar
+              KELUAR
             </button>
           </div>
         </div>
@@ -125,69 +134,93 @@ export default function Navigation() {
       {/* Mobile Toggle Button */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-6 right-6 z-[60] h-12 w-12 rounded-2xl bg-zinc-950 text-white flex items-center justify-center shadow-2xl active:scale-90 transition-all border border-zinc-800"
+        className="lg:hidden fixed top-6 right-6 z-[70] h-14 w-14 rounded-2xl bg-zinc-950 text-white flex items-center justify-center shadow-2xl active:scale-90 transition-all border-2 border-zinc-800"
       >
-        {isOpen ? <X size={20} /> : <MenuIcon size={20} />}
+        {isOpen ? <X size={24} strokeWidth={3} /> : <MenuIcon size={24} strokeWidth={3} />}
       </button>
 
       {/* Mobile Sidebar Overlay */}
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] lg:hidden" onClick={() => setIsOpen(false)} />
-          <div className="fixed left-0 top-0 h-full w-72 bg-zinc-950 z-[60] p-8 lg:hidden animate-in slide-in-from-left duration-300 border-r border-zinc-800">
-             <div className="flex flex-col items-center mb-12">
-                <div className="h-20 w-20 bg-white rounded-2xl flex items-center justify-center p-3">
-                  <div className="relative h-full w-full">
-                    <Image 
-                      src="/salero-logo.png" 
-                      alt="Salero Logo" 
-                      fill
-                      sizes="80px"
-                      className="object-contain"
-                    />
-                  </div>
+      <div 
+        className={cn(
+          "fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] lg:hidden transition-all duration-500",
+          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none invisible"
+        )} 
+        onClick={() => setIsOpen(false)} 
+      />
+
+      {/* Mobile Sidebar - Fully Scrollable */}
+      <div 
+        className={cn(
+          "fixed left-0 top-0 h-full w-80 bg-zinc-950 z-[60] lg:hidden transition-all duration-[800ms] border-r border-zinc-800 will-change-transform overflow-y-auto custom-scrollbar",
+          isOpen ? "translate-x-0 opacity-100 shadow-[30px_0_100px_rgba(0,0,0,0.8)]" : "-translate-x-full opacity-0 invisible shadow-none"
+        )}
+        style={{ transitionTimingFunction: "cubic-bezier(0.32, 0.72, 0, 1)" }}
+      >
+        <div className="flex flex-col min-h-full p-8">
+           {/* Logo Section */}
+           <div className="flex flex-col items-center mb-16 mt-8">
+              <div className="h-24 w-24 bg-white rounded-[2rem] flex items-center justify-center p-4 shadow-2xl shadow-white/5">
+                <div className="relative h-full w-full">
+                  <Image 
+                    src="/salero-logo.png" 
+                    alt="Salero Logo" 
+                    fill
+                    sizes="96px"
+                    className="object-contain"
+                  />
                 </div>
-             </div>
-             <nav className="space-y-4">
-                {isLoading ? (
-                  <div className="space-y-4 animate-in fade-in duration-500">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="h-12 w-full bg-zinc-900/50 rounded-xl animate-pulse" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-700 ease-out">
-                    {visibleItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setIsOpen(false)}
-                        className={cn(
-                          "flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all",
-                          pathname === item.href ? "bg-primary text-white" : "text-zinc-500 hover:bg-zinc-900"
-                        )}
-                      >
-                        <item.icon size={20} />
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                <button onClick={handleLogout} className="flex items-center gap-4 px-6 py-4 w-full text-zinc-500 font-bold mt-4 border-t border-zinc-900 pt-8">
-                  <LogOut size={20} />
-                  Keluar
-                </button>
-             </nav>
-          </div>
-        </>
-      )}
+              </div>
+           </div>
+
+           {/* Navigation Items */}
+           <nav className="flex-1 space-y-3 mb-12">
+              {isLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-14 w-full bg-zinc-900/50 rounded-2xl animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {visibleItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={cn(
+                        "flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all text-sm uppercase tracking-wider",
+                        pathname === item.href 
+                          ? "bg-primary text-white shadow-xl shadow-primary/20" 
+                          : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-100"
+                      )}
+                    >
+                      <item.icon size={20} className={pathname === item.href ? "text-white" : "text-zinc-700"} />
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+           </nav>
+
+           {/* Logout Section at the very bottom of the scrollable area */}
+           <div className="mt-auto pt-8 border-t border-zinc-900 pb-8">
+              <button 
+                onClick={handleLogout} 
+                className="flex items-center gap-4 px-6 py-4 w-full text-zinc-500 font-bold hover:text-rose-500 transition-colors uppercase tracking-widest text-sm"
+              >
+                <LogOut size={20} />
+                KELUAR
+              </button>
+           </div>
+        </div>
+      </div>
 
       {/* Logout Confirmation Modal */}
       <ConfirmModal 
         isOpen={isLogoutOpen}
         onClose={() => setIsLogoutOpen(false)}
         onConfirm={confirmLogout}
-        title="Konfirmasi Keluar"
+        title="KONFIRMASI KELUAR"
         message="Apakah Anda yakin ingin keluar dari sistem Salero? Sesi Anda akan diakhiri demi keamanan."
       />
     </>

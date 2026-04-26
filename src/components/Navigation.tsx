@@ -18,6 +18,7 @@ import {
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { ConfirmModal } from "./ui/ConfirmModal";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["OWNER"] },
@@ -32,11 +33,20 @@ const NAV_ITEMS = [
 export default function Navigation() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const { data: session, status } = useSession();
   
   const isLoading = status === "loading";
   const userRole = (session?.user as any)?.role;
   const visibleItems = NAV_ITEMS.filter(item => userRole && item.roles.includes(userRole));
+
+  const handleLogout = () => {
+    setIsLogoutOpen(true);
+  };
+
+  const confirmLogout = () => {
+    signOut();
+  };
 
   return (
     <>
@@ -62,7 +72,7 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* Navigation Items with Smooth Animation */}
+          {/* Navigation Items */}
           <nav className="flex-1 px-6 space-y-1.5 overflow-y-auto custom-scrollbar">
             {isLoading ? (
               <div className="space-y-1.5 animate-in fade-in duration-500">
@@ -102,7 +112,7 @@ export default function Navigation() {
           {/* Logout Section */}
           <div className="p-8 mt-auto border-t border-zinc-900">
             <button 
-              onClick={() => signOut()}
+              onClick={handleLogout}
               className="flex items-center gap-4 w-full px-6 py-4 rounded-2xl text-zinc-500 hover:text-rose-500 hover:bg-rose-500/5 transition-all font-bold text-sm"
             >
               <LogOut size={20} />
@@ -163,7 +173,7 @@ export default function Navigation() {
                     ))}
                   </div>
                 )}
-                <button onClick={() => signOut()} className="flex items-center gap-4 px-6 py-4 w-full text-zinc-500 font-bold mt-4 border-t border-zinc-900 pt-8">
+                <button onClick={handleLogout} className="flex items-center gap-4 px-6 py-4 w-full text-zinc-500 font-bold mt-4 border-t border-zinc-900 pt-8">
                   <LogOut size={20} />
                   Keluar
                 </button>
@@ -171,6 +181,15 @@ export default function Navigation() {
           </div>
         </>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal 
+        isOpen={isLogoutOpen}
+        onClose={() => setIsLogoutOpen(false)}
+        onConfirm={confirmLogout}
+        title="Konfirmasi Keluar"
+        message="Apakah Anda yakin ingin keluar dari sistem Salero? Sesi Anda akan diakhiri demi keamanan."
+      />
     </>
   );
 }

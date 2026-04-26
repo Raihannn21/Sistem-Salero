@@ -6,53 +6,31 @@ const prisma = new PrismaClient();
 async function main() {
   // Bersihkan data lama untuk testing bersih
   await prisma.sale.deleteMany();
+  await prisma.transaction.deleteMany();
   await prisma.expense.deleteMany();
   await prisma.menuItem.deleteMany();
   await prisma.user.deleteMany();
 
-  console.log("Memulai seeding sistem profesional...");
+  console.log("Memulai seeding Admin Utama...");
 
-  // 1. Buat Akun OWNER (Admin Utama)
-  const hashedPassword = await bcrypt.hash("admin123", 10);
+  // Buat Akun OWNER (Admin Utama)
+  const hashedAdminPassword = await bcrypt.hash("November2826", 10);
   await prisma.user.create({
     data: {
-      username: "admin",
-      password: hashedPassword,
+      username: "salerobana",
+      password: hashedAdminPassword,
       role: "OWNER",
-      fullName: "Administrator Salero",
+      fullName: "Owner Salero Bana",
     },
   });
 
-  // 2. Buat Beberapa Menu Awal
-  const rendang = await prisma.menuItem.create({
-    data: {
-      name: "Nasi Rendang Spesial",
-      basePrice: 25000,
-    },
-  });
-
-  const ayam = await prisma.menuItem.create({
-    data: {
-      name: "Nasi Ayam Bakar",
-      basePrice: 20000,
-    },
-  });
-
-  // 3. Tambahkan Pengeluaran Awal (Opsional)
-  await prisma.expense.create({
-    data: {
-      description: "Belanja Pasar Mingguan",
-      amount: 500000,
-      category: "Belanja",
-    },
-  });
-
-  console.log("Seeding selesai! Akun 'admin' sekarang adalah OWNER dengan password 'admin123'.");
+  console.log("Seeding selesai!");
+  console.log("HANYA ADMIN: salerobana | Password: November2826");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("Error Seeding:", e);
     process.exit(1);
   })
   .finally(async () => {

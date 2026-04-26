@@ -120,7 +120,7 @@ export default function LoginPage() {
 
           <div className="mt-12 text-center">
             <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">
-              Butuh bantuan? <span className="text-primary hover:underline cursor-pointer">Hubungi Developer</span>
+              Butuh bantuan? <a href="https://wa.me/6281365150455?text=Halo%20Developer%20Salero%2C%20saya%20butuh%20bantuan%20terkait%20sistem..." target="_blank" rel="noopener noreferrer" className="text-primary hover:underline cursor-pointer">Hubungi Developer</a>
             </p>
           </div>
         </div>

@@ -10,7 +10,9 @@ import {
   LogOut,
   Menu as MenuIcon,
   X,
-  BarChart3
+  BarChart3,
+  History,
+  Users
 } from "lucide-react";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
@@ -20,10 +22,11 @@ import { Button } from "./ui/Button";
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["OWNER"] },
   { label: "Penjualan (Kasir)", href: "/sales", icon: ShoppingCart, roles: ["OWNER", "EMPLOYEE"] },
-  { label: "Catat Belanja", href: "/expenses", icon: Package, roles: ["OWNER"] },
+  { label: "Riwayat Transaksi", href: "/sales/history", icon: History, roles: ["OWNER", "EMPLOYEE"] },
+  { label: "Catatan Pengeluaran", href: "/expenses", icon: Package, roles: ["OWNER"] },
   { label: "Manajemen Menu", href: "/menu", icon: UtensilsCrossed, roles: ["OWNER"] },
   { label: "Laporan Keuangan", href: "/reports", icon: BarChart3, roles: ["OWNER"] },
-  { label: "Kelola Karyawan", href: "/employees", icon: X, roles: ["OWNER"] }, // Added Employee management for Owner
+  { label: "Kelola Karyawan", href: "/employees", icon: Users, roles: ["OWNER"] },
 ];
 
 export default function Navigation() {

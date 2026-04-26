@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { PageHeader } from "./ui/PageHeader";
 import { Button } from "./ui/Button";
-import { Plus, Trash2, ShoppingBag, Calendar, DollarSign, Wallet } from "lucide-react";
+import { Plus, Trash2, Calendar, Wallet, Filter, ArrowRight, ChevronRight } from "lucide-react";
 import { Card } from "./ui/Card";
 import { formatCurrency, cn } from "@/lib/utils";
-import { addExpense, deleteExpense } from "@/actions/expenses";
+import { deleteExpense } from "@/actions/expenses";
 import { useToast } from "./ui/Toast";
 import { ConfirmModal } from "./ui/ConfirmModal";
+import ExpenseModal from "./ExpenseModal";
 import { Expense } from "@prisma/client";
-import { format } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, parseISO } from "date-fns";
 import { id } from "date-fns/locale";
 
 interface ExpenseControllerProps {
@@ -19,37 +20,24 @@ interface ExpenseControllerProps {
 
 export default function ExpenseController({ expenses }: ExpenseControllerProps) {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!description || !amount) return;
+  // Filter States
+  const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-01")); // Default to start of month
+  const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
 
-    setLoading(true);
-    try {
-      const result = await addExpense({
-        description,
-        amount: parseFloat(amount),
-        category: "Belanja Harian"
-      });
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter(exp => {
+      const expDate = new Date(exp.date);
+      const start = startOfDay(parseISO(startDate));
+      const end = endOfDay(parseISO(endDate));
+      return isWithinInterval(expDate, { start, end });
+    });
+  }, [expenses, startDate, endDate]);
 
-      if (result.success) {
-        showToast("Pengeluaran berhasil dicatat.", "success");
-        setDescription("");
-        setAmount("");
-      } else {
-        showToast(result.error || "Gagal mencatat pengeluaran.", "error");
-      }
-    } catch (error) {
-      showToast("Terjadi kesalahan sistem.", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const totalFiltered = filteredExpenses.reduce((acc, exp) => acc + exp.amount, 0);
 
   const openDeleteConfirm = (id: string) => {
     setSelectedId(id);
@@ -61,7 +49,7 @@ export default function ExpenseController({ expenses }: ExpenseControllerProps) 
     try {
       const result = await deleteExpense(selectedId);
       if (result.success) {
-        showToast("Catatan belanja dihapus.", "success");
+        showToast("Catatan pengeluaran dihapus.", "success");
       }
     } finally {
       setSelectedId(null);
@@ -69,118 +57,116 @@ export default function ExpenseController({ expenses }: ExpenseControllerProps) 
     }
   };
 
-  const totalToday = expenses.reduce((acc, exp) => acc + exp.amount, 0);
-
   return (
     <>
       <PageHeader 
-        category="Manajemen Keuangan"
-        title="Catat Belanja & Operasional"
-        description="Input semua pengeluaran hari ini (pasar, gas, listrik, dll) untuk menghitung untung bersih."
+        category="Finance Archive"
+        title="Catatan Pengeluaran"
+        description="Kelola dan pantau seluruh arus kas keluar bisnis Anda."
+        action={
+          <Button onClick={() => setIsModalOpen(true)} className="shadow-lg shadow-primary/20">
+            <Plus size={18} strokeWidth={3} />
+            TAMBAH PENGELUARAN
+          </Button>
+        }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Form Section */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-8">
-            <div className="mb-8 flex items-center gap-4">
+      <div className="space-y-10">
+        {/* Filter Section */}
+        <Card className="border-2 border-primary/5 bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                <Plus size={24} strokeWidth={3} />
+                <Filter size={20} strokeWidth={2.5} />
               </div>
-              <h3 className="text-xl font-black text-zinc-900 tracking-tight">Input Belanja</h3>
+              <div>
+                <h3 className="font-black text-zinc-900 tracking-tight leading-none">Filter Periode</h3>
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Pilih rentang tanggal</p>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Keterangan</label>
-                <div className="relative group">
-                  <ShoppingBag className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={18} />
-                  <input 
-                    type="text" 
-                    placeholder="Contoh: Belanja Pasar Pagi"
-                    className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-4 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold placeholder:text-zinc-300"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                  />
-                </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="relative group">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={16} />
+                <input 
+                  type="date" 
+                  className="bg-zinc-50 border border-zinc-100 text-zinc-900 pl-12 pr-4 py-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold text-sm"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
               </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Total Biaya (IDR)</label>
-                <div className="relative group">
-                  <DollarSign className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={18} />
-                  <input 
-                    type="number" 
-                    placeholder="Contoh: 500000"
-                    className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-4 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold placeholder:text-zinc-300"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    required
-                  />
-                </div>
+              <div className="h-[2px] w-4 bg-zinc-200 rounded-full" />
+              <div className="relative group">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={16} />
+                <input 
+                  type="date" 
+                  className="bg-zinc-50 border border-zinc-100 text-zinc-900 pl-12 pr-4 py-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold text-sm"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
               </div>
+            </div>
 
-              <Button type="submit" className="w-full py-4 shadow-xl shadow-primary/20" isLoading={loading}>
-                SIMPAN PENGELUARAN
-              </Button>
-            </form>
-          </Card>
-        </div>
-
-        {/* History Section */}
-        <div className="lg:col-span-2">
-          <div className="mb-8 flex items-center justify-between">
-            <h3 className="text-xl font-black text-zinc-900 tracking-tight">Riwayat Belanja</h3>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-50 border border-zinc-100">
-              <Wallet size={16} className="text-primary" />
-              <span className="text-xs font-black text-zinc-500 uppercase tracking-widest">Total: {formatCurrency(totalToday)}</span>
+            <div className="px-6 py-4 rounded-2xl bg-zinc-900 text-white flex items-center gap-4 shadow-xl shadow-zinc-200">
+              <Wallet size={20} className="text-primary" />
+              <div>
+                <p className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.3em] leading-none mb-1">Total Terfilter</p>
+                <p className="text-xl font-black tracking-tighter">{formatCurrency(totalFiltered)}</p>
+              </div>
             </div>
           </div>
+        </Card>
 
-          <div className="space-y-4">
-            {expenses.length === 0 ? (
-              <div className="py-20 text-center bg-white rounded-[2.5rem] border border-zinc-50 border-dashed">
-                <p className="text-zinc-300 font-bold uppercase tracking-widest text-xs">Belum ada pengeluaran hari ini</p>
-              </div>
-            ) : (
-              expenses.map((exp) => (
-                <div key={exp.id} className="group p-6 rounded-[2rem] bg-white border border-zinc-50 shadow-sm flex items-center justify-between hover:border-primary/20 transition-all animate-in fade-in slide-in-from-right-4">
-                  <div className="flex items-center gap-6">
-                    <div className="h-12 w-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-primary/5 group-hover:text-primary transition-all">
-                      <Calendar size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-zinc-900 tracking-tight">{exp.description}</h4>
-                      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mt-1">
+        {/* History List */}
+        <div className="space-y-6">
+          {filteredExpenses.length === 0 ? (
+            <div className="py-32 text-center bg-white rounded-[3rem] border-2 border-zinc-50 border-dashed">
+              <p className="text-zinc-300 font-bold uppercase tracking-widest text-sm">Tidak ada data untuk periode ini</p>
+            </div>
+          ) : (
+            filteredExpenses.map((exp) => (
+              <div key={exp.id} className="group p-8 rounded-[2.5rem] bg-white border border-zinc-50 shadow-sm flex items-center justify-between hover:border-primary/20 hover:shadow-xl hover:shadow-zinc-200/20 transition-all duration-500 animate-in fade-in slide-in-from-bottom-8">
+                <div className="flex items-center gap-8">
+                  <div className="h-16 w-16 rounded-3xl bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-inner">
+                    <Calendar size={24} />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-black text-zinc-900 tracking-tight group-hover:text-primary transition-colors">{exp.description}</h4>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="px-3 py-1 rounded-full bg-zinc-100 text-zinc-500 text-[10px] font-black uppercase tracking-widest">
                         {format(new Date(exp.date), 'EEEE, dd MMMM yyyy', { locale: id })}
-                      </p>
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-6">
-                    <p className="text-lg font-black text-zinc-900 tracking-tighter">{formatCurrency(exp.amount)}</p>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => openDeleteConfirm(exp.id)}
-                      className="p-2 h-10 w-10 rounded-xl text-zinc-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 size={18} />
-                    </Button>
-                  </div>
                 </div>
-              ))
-            )}
-          </div>
+                <div className="flex items-center gap-8">
+                  <p className="text-2xl font-black text-zinc-900 tracking-tighter">{formatCurrency(exp.amount)}</p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => openDeleteConfirm(exp.id)}
+                    className="h-12 w-12 rounded-xl bg-red-50 text-red-200 hover:text-red-500 hover:bg-red-100 transition-all border border-red-50"
+                  >
+                    <Trash2 size={20} />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
+
+      <ExpenseModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
 
       <ConfirmModal 
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleDelete}
-        title="Hapus Catatan Belanja"
-        message="Apakah Anda yakin ingin menghapus catatan pengeluaran ini? Ini akan mengubah laporan keuntungan Anda."
+        title="Hapus Pengeluaran"
+        message="Apakah Anda yakin ingin menghapus catatan pengeluaran ini?"
       />
     </>
   );

@@ -2,37 +2,72 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function recordSale(formData: FormData) {
+export async function completeTransaction(items: { menuItemId: string, quantity: number }[]) {
   try {
-    const menuItemId = formData.get("menuItemId") as string;
-    const quantity = parseInt(formData.get("quantity") as string);
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) return { success: false, error: "Sesi habis, silakan login kembali." };
 
-    if (!menuItemId || isNaN(quantity)) {
-      return { success: false, error: "Data penjualan tidak valid." };
+    const userId = (session.user as any).id;
+    
+    // Calculate total
+    let totalAmount = 0;
+    const salesData = [];
+
+    for (const item of items) {
+      const menu = await prisma.menuItem.findUnique({ where: { id: item.menuItemId } });
+      if (!menu) continue;
+      
+      const price = menu.basePrice * item.quantity;
+      totalAmount += price;
+      
+      salesData.push({
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        totalPrice: price,
+        userId: userId
+      });
     }
 
-    const menuItem = await prisma.menuItem.findUnique({
-      where: { id: menuItemId },
-    });
+    if (salesData.length === 0) return { success: false, error: "Keranjang kosong." };
 
-    if (!menuItem) throw new Error("Menu item not found");
-
-    const totalPrice = menuItem.basePrice * quantity;
-
-    await prisma.sale.create({
+    // Create Transaction and Sales in a single transaction
+    await prisma.transaction.create({
       data: {
-        menuItemId,
-        quantity,
-        totalPrice
+        totalAmount,
+        userId,
+        sales: {
+          create: salesData
+        }
       }
     });
 
     revalidatePath("/sales");
+    revalidatePath("/sales/history");
+    revalidatePath("/");
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error completing transaction:", error);
+    return { success: false, error: "Gagal memproses pesanan." };
+  }
+}
+
+// Keep delete/update for single sales (Owner only)
+export async function deleteSale(id: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "OWNER") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await prisma.sale.delete({ where: { id } });
+    revalidatePath("/sales/history");
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    console.error("Error recording sale:", error);
-    return { success: false, error: "Gagal mencatat penjualan." };
+    return { success: false, error: "Gagal menghapus." };
   }
 }

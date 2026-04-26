@@ -19,13 +19,7 @@ export default async function ExpensesPage() {
 
   // Fetch expenses for today
   const expenses = await prisma.expense.findMany({
-    where: {
-      date: {
-        gte: startOfDay(new Date()),
-        lte: endOfDay(new Date()),
-      }
-    },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { date: 'desc' }
   });
 
   return (

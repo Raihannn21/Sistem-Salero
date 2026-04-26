@@ -12,21 +12,14 @@ export default async function SalesPage() {
     redirect("/login");
   }
 
-  const [menuItems, recentSales] = await Promise.all([
-    prisma.menuItem.findMany({ orderBy: { name: 'asc' } }),
-    prisma.sale.findMany({
-      include: { menuItem: true },
-      orderBy: { date: 'desc' },
-      take: 10,
-    }),
-  ]);
+  const menuItems = await prisma.menuItem.findMany({ orderBy: { name: 'asc' } });
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] lg:pl-72">
       <Navigation />
       
       <main className="p-8 lg:p-12 max-w-[1600px] mx-auto animate-in">
-        <SalesController menuItems={menuItems} recentSales={recentSales} />
+        <SalesController menuItems={menuItems} />
       </main>
     </div>
   );

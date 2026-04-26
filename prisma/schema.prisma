@@ -28,6 +28,10 @@ model User {
   emergencyContact String?
   socialMedia      String?
   
+  // Relasi
+  transactions     Transaction[]
+  sales            Sale[] // Still keep this for direct relation if needed
+  
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -41,15 +45,36 @@ model MenuItem {
   updatedAt    DateTime     @updatedAt
 }
 
+model Transaction {
+  id           String   @id @default(cuid())
+  totalAmount  Float
+  
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  
+  sales        Sale[]
+  
+  date         DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 model Sale {
-  id         String   @id @default(cuid())
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
-  menuItemId String
-  quantity   Int
-  totalPrice Float
-  date       DateTime @default(now())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String       @id @default(cuid())
+  menuItem      MenuItem     @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  menuItemId    String
+  
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId String?
+  
+  user          User         @relation(fields: [userId], references: [id])
+  userId        String
+  
+  quantity      Int
+  totalPrice    Float
+  date          DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model Expense {

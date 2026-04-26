@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { ShoppingCart, Trash2, Minus, Plus, ChevronRight, Search, Receipt, X } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, ChevronRight, Search, Receipt, X, Banknote, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { completeTransaction } from "@/actions/sales";
 import { useToast } from "./ui/Toast";
@@ -28,8 +28,9 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "QRIS">("CASH");
 
-  // Lock body scroll when cart is open
+  // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (isMobileCartOpen) {
       document.body.style.overflow = "hidden";
@@ -87,11 +88,12 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
     }));
 
     try {
-      const result = await completeTransaction(items);
+      const result = await completeTransaction(items, paymentMethod);
       if (result.success) {
         showToast("PESANAN BERHASIL DISIMPAN!", "success");
         setCart([]);
         setIsMobileCartOpen(false);
+        setPaymentMethod("CASH"); // Reset to default
       } else {
         showToast(result.error || "Gagal memproses pesanan.", "error");
       }
@@ -167,6 +169,8 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
             cart={cart}
             totalAmount={totalAmount}
             loading={loading}
+            paymentMethod={paymentMethod}
+            onSetPaymentMethod={setPaymentMethod}
             onUpdateQuantity={updateQuantity}
             onRemove={removeFromCart}
             onCheckout={handleCheckout}
@@ -188,7 +192,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
           </button>
         </div>
 
-        {/* Mobile Cart Overlay/Drawer - Enhanced Animation */}
+        {/* Mobile Cart Overlay/Drawer */}
         <div 
           className={cn(
             "fixed inset-0 bg-zinc-950/40 backdrop-blur-md z-[110] lg:hidden transition-opacity duration-500",
@@ -209,7 +213,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
               <div className="h-1.5 w-12 bg-zinc-100 rounded-full" />
             </div>
             
-            {/* Close Button UI */}
+            {/* Close Button */}
             <button 
               onClick={() => setIsMobileCartOpen(false)}
               className="absolute right-8 top-6 z-20 h-10 w-10 rounded-full bg-zinc-50 hover:bg-zinc-100 flex items-center justify-center text-zinc-900 transition-colors shadow-sm"
@@ -222,6 +226,8 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
                 cart={cart}
                 totalAmount={totalAmount}
                 loading={loading}
+                paymentMethod={paymentMethod}
+                onSetPaymentMethod={setPaymentMethod}
                 onUpdateQuantity={updateQuantity}
                 onRemove={removeFromCart}
                 onCheckout={handleCheckout}
@@ -240,6 +246,8 @@ function CartContent({
   cart, 
   totalAmount, 
   loading, 
+  paymentMethod,
+  onSetPaymentMethod,
   onUpdateQuantity, 
   onRemove, 
   onCheckout,
@@ -248,6 +256,8 @@ function CartContent({
   cart: CartItem[], 
   totalAmount: number, 
   loading: boolean, 
+  paymentMethod: "CASH" | "QRIS",
+  onSetPaymentMethod: (method: "CASH" | "QRIS") => void,
   onUpdateQuantity: (id: string, delta: number) => void,
   onRemove: (id: string) => void,
   onCheckout: () => void,
@@ -312,8 +322,40 @@ function CartContent({
       </div>
 
       {/* Cart Footer */}
-      <div className="p-8 lg:p-10 pt-8 border-t border-zinc-100 bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
-        <div className="flex justify-between items-center mb-8">
+      <div className="p-8 lg:p-10 pt-8 border-t border-zinc-100 bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.02)] space-y-8">
+        
+        {/* Payment Method Selector */}
+        <div className="space-y-4">
+          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] block ml-1">Metode Pembayaran</span>
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+              onClick={() => onSetPaymentMethod("CASH")}
+              className={cn(
+                "flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border-2",
+                paymentMethod === "CASH" 
+                  ? "bg-zinc-900 border-zinc-900 text-white shadow-xl shadow-zinc-900/20" 
+                  : "bg-white border-zinc-100 text-zinc-400 hover:border-zinc-200"
+              )}
+            >
+              <Banknote size={16} />
+              Tunai
+            </button>
+            <button 
+              onClick={() => onSetPaymentMethod("QRIS")}
+              className={cn(
+                "flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border-2",
+                paymentMethod === "QRIS" 
+                  ? "bg-primary border-primary text-white shadow-xl shadow-primary/20" 
+                  : "bg-white border-zinc-100 text-zinc-400 hover:border-zinc-200"
+              )}
+            >
+              <QrCode size={16} />
+              QRIS
+            </button>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center">
           <div>
             <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] block mb-1">Total Pembayaran</span>
             <span className="text-3xl font-black text-primary tracking-tighter">Rp {totalAmount.toLocaleString()}</span>

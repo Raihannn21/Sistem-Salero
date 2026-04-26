@@ -17,7 +17,9 @@ import {
   ShoppingCart,
   ArrowRight,
   ChevronLeft,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Banknote,
+  QrCode
 } from "lucide-react";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { id } from "date-fns/locale";
@@ -254,10 +256,11 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
             <thead>
               <tr className="border-b border-zinc-50 bg-zinc-50/50">
                 <th className="px-8 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Nota / ID</th>
+                <th className="px-8 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Metode</th>
                 <th className="px-8 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Karyawan & Waktu</th>
                 <th className="px-8 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Detail Pesanan</th>
                 <th className="px-8 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] text-right">Total Akhir</th>
-                <th className="px-8 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] text-center">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] text-center">Detail</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50">
@@ -282,6 +285,17 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                       </div>
                     </td>
                     <td className="px-8 py-6">
+                      <div className={cn(
+                        "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-widest border",
+                        tx.paymentMethod === "QRIS" 
+                          ? "bg-primary/5 text-primary border-primary/10" 
+                          : "bg-zinc-100 text-zinc-600 border-zinc-200"
+                      )}>
+                        {tx.paymentMethod === "QRIS" ? <QrCode size={12} /> : <Banknote size={12} />}
+                        {tx.paymentMethod}
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 text-zinc-900 font-black text-xs uppercase tracking-tight">
                           <UserIcon size={12} className="text-primary" />
@@ -300,6 +314,7 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                               {s.quantity}x {s.menuItem.name}
                             </span>
                           ))}
+                          {tx.sales.length > 2 && <span className="text-[10px] font-bold text-zinc-300">+{tx.sales.length - 2} lagi</span>}
                        </div>
                     </td>
                     <td className="px-8 py-6 text-right">
@@ -312,9 +327,9 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                     </td>
                   </tr>
                   
-                  {/* Smooth Desktop Detail View */}
+                  {/* Desktop Detail View */}
                   <tr>
-                    <td colSpan={5} className="p-0 border-none">
+                    <td colSpan={6} className="p-0 border-none">
                       <div className={cn(
                         "grid transition-all duration-500 ease-in-out",
                         expandedRow === tx.id ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
@@ -363,7 +378,17 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                     <Receipt size={18} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">ID NOTA</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none">ID NOTA</p>
+                      <span className={cn(
+                        "px-2 py-0.5 rounded-md font-black text-[8px] uppercase border",
+                        tx.paymentMethod === "QRIS" 
+                          ? "bg-primary/5 text-primary border-primary/10" 
+                          : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                      )}>
+                        {tx.paymentMethod}
+                      </span>
+                    </div>
                     <p className="text-xs font-black text-zinc-900">#{tx.id.slice(-8).toUpperCase()}</p>
                   </div>
                 </div>
@@ -391,7 +416,7 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
               </div>
             </div>
 
-            {/* Smooth Mobile Detail Expansion */}
+            {/* Mobile Detail Expansion */}
             <div className={cn(
               "grid transition-all duration-500 ease-in-out bg-zinc-50/50",
               expandedRow === tx.id ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"

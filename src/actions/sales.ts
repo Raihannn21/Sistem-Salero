@@ -8,7 +8,7 @@ import { authOptions } from "@/lib/auth";
 /**
  * Menyelesaikan satu Nota/Transaksi (Bulk)
  */
-export async function completeTransaction(items: { menuItemId: string, quantity: number }[]) {
+export async function completeTransaction(items: { menuItemId: string, quantity: number }[], paymentMethod: string = "CASH") {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return { success: false, error: "Sesi habis, silakan login kembali." };
@@ -39,6 +39,7 @@ export async function completeTransaction(items: { menuItemId: string, quantity:
       data: {
         totalAmount,
         userId,
+        paymentMethod,
         sales: {
           create: salesData
         }

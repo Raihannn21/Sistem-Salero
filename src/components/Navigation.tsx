@@ -13,7 +13,8 @@ import {
   X,
   BarChart3,
   History,
-  Users
+  Users,
+  MessageCircle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
@@ -118,13 +119,23 @@ export default function Navigation() {
             )}
           </nav>
 
-          {/* Logout Section */}
-          <div className="p-8 mt-auto border-t border-zinc-900">
+          {/* Bottom Section */}
+          <div className="p-8 mt-auto border-t border-zinc-900 space-y-2">
+            <a 
+              href="https://wa.me/6281365150455"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 w-full px-6 py-4 rounded-2xl text-emerald-500 hover:bg-emerald-500/10 transition-all font-black text-[10px] tracking-widest uppercase border border-emerald-500/20"
+            >
+              <MessageCircle size={18} />
+              Hubungi Developer
+            </a>
+            
             <button 
               onClick={handleLogout}
-              className="flex items-center gap-4 w-full px-6 py-4 rounded-2xl text-zinc-500 hover:text-rose-500 hover:bg-rose-500/5 transition-all font-bold text-sm uppercase tracking-widest"
+              className="flex items-center gap-4 w-full px-6 py-4 rounded-2xl text-zinc-500 hover:text-rose-500 hover:bg-rose-500/5 transition-all font-bold text-[10px] tracking-widest uppercase"
             >
-              <LogOut size={20} />
+              <LogOut size={18} />
               KELUAR
             </button>
           </div>
@@ -148,11 +159,11 @@ export default function Navigation() {
         onClick={() => setIsOpen(false)} 
       />
 
-      {/* Mobile Sidebar - Fully Scrollable */}
+      {/* Mobile Sidebar */}
       <div 
         className={cn(
-          "fixed left-0 top-0 h-full w-80 bg-zinc-950 z-[60] lg:hidden transition-all duration-[800ms] border-r border-zinc-800 will-change-transform overflow-y-auto custom-scrollbar",
-          isOpen ? "translate-x-0 opacity-100 shadow-[30px_0_100px_rgba(0,0,0,0.8)]" : "-translate-x-full opacity-0 invisible shadow-none"
+          "fixed left-0 top-0 h-full w-80 bg-zinc-950 z-[60] lg:hidden transition-all duration-[800ms] border-r border-zinc-800 will-change-transform overflow-y-auto custom-scrollbar shadow-[30px_0_100px_rgba(0,0,0,0.8)]",
+          isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0 invisible"
         )}
         style={{ transitionTimingFunction: "cubic-bezier(0.32, 0.72, 0, 1)" }}
       >
@@ -202,8 +213,18 @@ export default function Navigation() {
               )}
            </nav>
 
-           {/* Logout Section at the very bottom of the scrollable area */}
-           <div className="mt-auto pt-8 border-t border-zinc-900 pb-8">
+           {/* Bottom Section */}
+           <div className="mt-auto pt-8 border-t border-zinc-900 pb-8 space-y-2">
+              <a 
+                href="https://wa.me/6281365150455"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 w-full px-6 py-4 rounded-2xl text-emerald-500 hover:bg-emerald-500/10 transition-all font-black text-[10px] tracking-widest uppercase border border-emerald-500/20"
+              >
+                <MessageCircle size={18} />
+                Hubungi Developer
+              </a>
+              
               <button 
                 onClick={handleLogout} 
                 className="flex items-center gap-4 px-6 py-4 w-full text-zinc-500 font-bold hover:text-rose-500 transition-colors uppercase tracking-widest text-sm"

@@ -175,3 +175,29 @@ export async function deleteSale(id: string) {
     return { success: false, error: "Gagal menghapus." };
   }
 }
+
+/**
+ * Menghapus seluruh transaksi (Nota) beserta semua item didalamnya
+ */
+export async function deleteTransaction(id: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "OWNER") {
+      return { success: false, error: "Hanya Owner yang bisa menghapus seluruh transaksi." };
+    }
+
+    await prisma.transaction.delete({
+      where: { id }
+    });
+
+    revalidatePath("/sales/history");
+    revalidatePath("/");
+    revalidatePath("/sales");
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting transaction:", error);
+    return { success: false, error: "Gagal menghapus seluruh transaksi." };
+  }
+}
+

@@ -28,12 +28,13 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Select from "@/components/ui/Select";
 import DatePicker from "@/components/ui/DatePicker";
-import { deleteSale } from "@/actions/sales";
+import { deleteSale, deleteTransaction } from "@/actions/sales";
 import { useToast } from "./ui/Toast";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import SaleModal from "./SaleModal";
 import { ConfirmModal } from "./ui/ConfirmModal";
+import ReceiptModal from "./ReceiptModal";
 import { MenuItem, Sale, Transaction } from "@prisma/client";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -67,6 +68,10 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
   const [endDate, setEndDate] = useState("");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [receiptData, setReceiptData] = useState<any>(null);
+  const [isConfirmTransactionOpen, setIsConfirmTransactionOpen] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
 
   const userRole = (session?.user as any)?.role || "EMPLOYEE";
   const isOwner = userRole === "OWNER";
@@ -105,6 +110,41 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
     } finally {
       setSelectedId(null);
       setIsConfirmOpen(false);
+    }
+  };
+
+  const handleViewReceipt = (tx: TransactionWithDetails) => {
+    setReceiptData({
+      id: tx.id,
+      date: new Date(tx.date),
+      items: tx.sales.map(s => ({
+        name: s.menuItem.name,
+        quantity: s.quantity,
+        price: s.totalPrice
+      })),
+      totalAmount: tx.totalAmount,
+      paymentMethod: tx.paymentMethod,
+      cashierName: tx.user.fullName || tx.user.username
+    });
+    setIsReceiptOpen(true);
+  };
+
+  const openDeleteTransactionConfirm = (id: string) => {
+    setSelectedTransactionId(id);
+    setIsConfirmTransactionOpen(true);
+  };
+
+  const handleDeleteTransaction = async () => {
+    if (!selectedTransactionId) return;
+    try {
+      const result = await deleteTransaction(selectedTransactionId);
+      if (result.success) {
+        showToast("Seluruh nota berhasil dihapus.", "success");
+        router.refresh();
+      }
+    } finally {
+      setSelectedTransactionId(null);
+      setIsConfirmTransactionOpen(false);
     }
   };
 
@@ -274,11 +314,32 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                     onClick={() => setExpandedRow(expandedRow === tx.id ? null : tx.id)}
                   >
                     <td className="px-8 py-6">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-lg">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewReceipt(tx);
+                          }}
+                          className="h-10 w-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-lg hover:bg-primary transition-all active:scale-90 group-hover:scale-105"
+                          title="Lihat Struk"
+                        >
                           <Receipt size={18} />
-                        </div>
-                        <div>
+                        </button>
+                        
+                        {isOwner && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openDeleteTransactionConfirm(tx.id);
+                            }}
+                            className="h-10 w-10 rounded-xl bg-rose-50 text-rose-300 flex items-center justify-center border border-rose-100 hover:bg-rose-500 hover:text-white transition-all active:scale-90 group-hover:scale-105"
+                            title="Hapus Seluruh Nota"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+
+                        <div className="ml-2">
                           <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">ID NOTA</p>
                           <p className="text-xs font-black text-zinc-900">#{tx.id.slice(-8).toUpperCase()}</p>
                         </div>
@@ -373,10 +434,29 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
               onClick={() => setExpandedRow(expandedRow === tx.id ? null : tx.id)}
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-lg">
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewReceipt(tx);
+                    }}
+                    className="h-10 w-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-lg active:scale-90"
+                  >
                     <Receipt size={18} />
-                  </div>
+                  </button>
+
+                  {isOwner && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDeleteTransactionConfirm(tx.id);
+                      }}
+                      className="h-10 w-10 rounded-xl bg-rose-50 text-rose-400 flex items-center justify-center border border-rose-100 active:scale-90"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none">ID NOTA</p>
@@ -515,6 +595,20 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
         onConfirm={handleDelete}
         title="Hapus Catatan"
         message="Apakah Anda yakin ingin menghapus catatan pesanan ini dari nota?"
+      />
+
+      <ReceiptModal 
+        isOpen={isReceiptOpen}
+        onClose={() => setIsReceiptOpen(false)}
+        data={receiptData}
+      />
+
+      <ConfirmModal 
+        isOpen={isConfirmTransactionOpen}
+        onClose={() => setIsConfirmTransactionOpen(false)}
+        onConfirm={handleDeleteTransaction}
+        title="Hapus Seluruh Nota"
+        message="PERINGATAN: Ini akan menghapus satu transaksi utuh beserta SEMUA menu didalamnya. Tindakan ini tidak bisa dibatalkan."
       />
     </>
   );

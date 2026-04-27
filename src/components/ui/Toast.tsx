@@ -29,7 +29,14 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
 
   const showToast = useCallback((message: string, type: ToastType) => {
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
+    
+    setToasts((prev) => {
+      // 1. Anti-tumpuk: Hapus pesan yang sama agar tidak duplikat
+      const filtered = prev.filter(t => t.message !== message);
+      // 2. Limit: Hanya tampilkan maksimal 1 yang lama (total 2 dengan yang baru)
+      const limited = filtered.slice(-1);
+      return [...limited, { id, message, type }];
+    });
 
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));

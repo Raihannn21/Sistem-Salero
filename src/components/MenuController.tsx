@@ -13,7 +13,7 @@ import { ConfirmModal } from "./ui/ConfirmModal";
 import { MenuItem } from "@prisma/client";
 
 interface MenuControllerProps {
-  menuItems: (MenuItem & { _count: { sales: number } })[];
+  menuItems: (MenuItem & { totalSold: number })[];
 }
 
 export default function MenuController({ menuItems }: MenuControllerProps) {
@@ -125,10 +125,10 @@ export default function MenuController({ menuItems }: MenuControllerProps) {
             </div>
 
             <div className="bg-zinc-50/50 p-6 flex items-center justify-between border-t border-zinc-50">
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Terjual Hari Ini</span>
+              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Total Terjual</span>
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white shadow-sm border border-zinc-100 text-[11px] font-black tracking-tight text-zinc-600">
                 <ShoppingBag size={12} className="text-primary" />
-                {item._count.sales} Porsi
+                {item.totalSold} Porsi
               </div>
             </div>
           </Card>

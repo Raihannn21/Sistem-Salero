@@ -16,15 +16,20 @@ export default async function MenuPage() {
     redirect("/sales");
   }
 
-  // Fetch only menu items and their sales count
-  const menuItems = await prisma.menuItem.findMany({
+  // Fetch menu items and calculate total portions sold across all time
+  const rawMenuItems = await prisma.menuItem.findMany({
     include: {
-      _count: {
-        select: { sales: true }
+      sales: {
+        select: { quantity: true }
       }
     },
     orderBy: { name: 'asc' }
   });
+
+  const menuItems = rawMenuItems.map(item => ({
+    ...item,
+    totalSold: item.sales.reduce((sum, s) => sum + s.quantity, 0)
+  }));
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] lg:pl-72">

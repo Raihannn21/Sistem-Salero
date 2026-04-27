@@ -38,7 +38,7 @@ export const authOptions: NextAuthOptions = {
 
         return {
           id: user.id,
-          name: user.username,
+          name: user.fullName || user.username,
           role: user.role,
         };
       },
@@ -50,9 +50,9 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id as string;
+        (session.user as any).id = token.id as string;
         session.user.name = token.name as string;
-        session.user.role = token.role as string;
+        (session.user as any).role = token.role as string;
       }
       return session;
     },

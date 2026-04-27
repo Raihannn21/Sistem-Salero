@@ -104,7 +104,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
           items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price * i.quantity })),
           totalAmount: totalAmount,
           paymentMethod: paymentMethod,
-          cashierName: (session?.user as any)?.fullName || (session?.user as any)?.username || "Kasir"
+          cashierName: session?.user?.name || "Kasir"
         });
         
         setIsReceiptOpen(true);

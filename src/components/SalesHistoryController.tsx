@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { 
-  History, 
-  Calendar, 
-  User as UserIcon, 
-  Trash2, 
-  Edit2, 
-  Search, 
-  Receipt, 
-  ChevronDown, 
-  ChevronUp, 
+import {
+  History,
+  Calendar,
+  User as UserIcon,
+  Trash2,
+  Edit2,
+  Search,
+  Receipt,
+  ChevronDown,
+  ChevronUp,
   Filter,
   TrendingUp,
   DollarSign,
@@ -57,7 +57,7 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
   const { showToast } = useToast();
   const router = useRouter();
   const { data: session } = useSession();
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -151,14 +151,14 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
   const filteredTransactions = useMemo(() => {
     return initialTransactions.filter(tx => {
       const txDate = new Date(tx.date);
-      
-      const matchesSearch = 
+
+      const matchesSearch =
         tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (tx.user.fullName || tx.user.username).toLowerCase().includes(searchTerm.toLowerCase()) ||
         tx.sales.some(s => s.menuItem.name.toLowerCase().includes(searchTerm.toLowerCase()));
-      
+
       const matchesEmployee = filterUser === "all" || tx.userId === filterUser;
-      
+
       let matchesDate = true;
       if (startDate && endDate) {
         matchesDate = isWithinInterval(txDate, {
@@ -170,7 +170,7 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
       } else if (endDate) {
         matchesDate = txDate <= endOfDay(new Date(endDate));
       }
-      
+
       return matchesSearch && matchesEmployee && matchesDate;
     });
   }, [initialTransactions, searchTerm, filterUser, startDate, endDate]);
@@ -197,7 +197,7 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
 
   return (
     <>
-      <PageHeader 
+      <PageHeader
         category="Archive"
         title="Riwayat Transaksi"
         description="Pantau semua performa penjualan dan audit transaksi nota di sini."
@@ -256,27 +256,27 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
           </div>
 
           <div className="xl:col-span-5 flex flex-col sm:flex-row items-end gap-3">
-             <div className="flex-1 w-full">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 mb-2 block">Rentang Tanggal</label>
-                <div className="flex items-center gap-3">
-                  <DatePicker 
-                    value={startDate}
-                    onChange={setStartDate}
-                    placeholder="Mulai"
-                  />
-                  <ArrowRight size={16} className="text-zinc-300 hidden sm:block shrink-0" />
-                  <DatePicker 
-                    value={endDate}
-                    onChange={setEndDate}
-                    placeholder="Sampai"
-                  />
-                </div>
-             </div>
+            <div className="flex-1 w-full">
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 mb-2 block">Rentang Tanggal</label>
+              <div className="flex items-center gap-3">
+                <DatePicker
+                  value={startDate}
+                  onChange={setStartDate}
+                  placeholder="Mulai"
+                />
+                <ArrowRight size={16} className="text-zinc-300 hidden sm:block shrink-0" />
+                <DatePicker
+                  value={endDate}
+                  onChange={setEndDate}
+                  placeholder="Sampai"
+                />
+              </div>
+            </div>
           </div>
 
           {isOwner && (
             <div className="xl:col-span-3">
-              <Select 
+              <Select
                 label="Filter Karyawan"
                 options={employeeOptions}
                 value={filterUser}
@@ -306,7 +306,7 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
             <tbody className="divide-y divide-zinc-50">
               {paginatedTransactions.map((tx) => (
                 <React.Fragment key={tx.id}>
-                  <tr 
+                  <tr
                     className={cn(
                       "hover:bg-zinc-50/50 transition-colors cursor-pointer group",
                       expandedRow === tx.id ? "bg-zinc-50/50" : ""
@@ -315,7 +315,7 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                   >
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewReceipt(tx);
@@ -325,9 +325,9 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                         >
                           <Receipt size={18} />
                         </button>
-                        
+
                         {isOwner && (
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
                               openDeleteTransactionConfirm(tx.id);
@@ -348,8 +348,8 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                     <td className="px-8 py-6">
                       <div className={cn(
                         "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-widest border",
-                        tx.paymentMethod === "QRIS" 
-                          ? "bg-primary/5 text-primary border-primary/10" 
+                        tx.paymentMethod === "QRIS"
+                          ? "bg-primary/5 text-primary border-primary/10"
                           : "bg-zinc-100 text-zinc-600 border-zinc-200"
                       )}>
                         {tx.paymentMethod === "QRIS" ? <QrCode size={12} /> : <Banknote size={12} />}
@@ -369,25 +369,25 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                       <div className="flex flex-wrap gap-1.5 max-w-xs">
-                          {tx.sales.slice(0, 2).map((s, idx) => (
-                            <span key={idx} className="inline-flex items-center px-3 py-1 rounded-lg bg-zinc-100 text-zinc-600 text-[10px] font-black uppercase">
-                              {s.quantity}x {s.menuItem.name}
-                            </span>
-                          ))}
-                          {tx.sales.length > 2 && <span className="text-[10px] font-bold text-zinc-300">+{tx.sales.length - 2} lagi</span>}
-                       </div>
+                      <div className="flex flex-wrap gap-1.5 max-w-xs">
+                        {tx.sales.slice(0, 2).map((s, idx) => (
+                          <span key={idx} className="inline-flex items-center px-3 py-1 rounded-lg bg-zinc-100 text-zinc-600 text-[10px] font-black uppercase">
+                            {s.quantity}x {s.menuItem.name}
+                          </span>
+                        ))}
+                        {tx.sales.length > 2 && <span className="text-[10px] font-bold text-zinc-300">+{tx.sales.length - 2} lagi</span>}
+                      </div>
                     </td>
                     <td className="px-8 py-6 text-right">
                       <p className="text-lg font-black text-zinc-900 tracking-tighter">{formatCurrency(tx.totalAmount)}</p>
                     </td>
                     <td className="px-8 py-6 text-center">
                       <div className={cn("transition-transform duration-500", expandedRow === tx.id ? "rotate-180" : "")}>
-                         <ChevronDown size={20} className={cn("mx-auto", expandedRow === tx.id ? "text-primary" : "text-zinc-300")} />
+                        <ChevronDown size={20} className={cn("mx-auto", expandedRow === tx.id ? "text-primary" : "text-zinc-300")} />
                       </div>
                     </td>
                   </tr>
-                  
+
                   {/* Desktop Detail View */}
                   <tr>
                     <td colSpan={6} className="p-0 border-none">
@@ -429,13 +429,13 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
       <div className="md:hidden space-y-4">
         {paginatedTransactions.map((tx) => (
           <div key={tx.id} className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm overflow-hidden transition-all duration-300">
-            <div 
+            <div
               className={cn("p-6 cursor-pointer transition-colors duration-300", expandedRow === tx.id ? "bg-zinc-50/50" : "")}
               onClick={() => setExpandedRow(expandedRow === tx.id ? null : tx.id)}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleViewReceipt(tx);
@@ -446,7 +446,7 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                   </button>
 
                   {isOwner && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         openDeleteTransactionConfirm(tx.id);
@@ -462,8 +462,8 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                       <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none">ID NOTA</p>
                       <span className={cn(
                         "px-2 py-0.5 rounded-md font-black text-[8px] uppercase border",
-                        tx.paymentMethod === "QRIS" 
-                          ? "bg-primary/5 text-primary border-primary/10" 
+                        tx.paymentMethod === "QRIS"
+                          ? "bg-primary/5 text-primary border-primary/10"
                           : "bg-zinc-100 text-zinc-500 border-zinc-200"
                       )}>
                         {tx.paymentMethod}
@@ -491,7 +491,7 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
                   </div>
                 </div>
                 <div className={cn("h-8 w-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 transition-transform duration-500", expandedRow === tx.id ? "rotate-180 bg-primary/10 text-primary" : "")}>
-                   <ChevronDown size={16} />
+                  <ChevronDown size={16} />
                 </div>
               </div>
             </div>
@@ -544,16 +544,16 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
             {filteredTransactions.length} Total Data
           </p>
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 max-w-full">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="h-10 px-3 rounded-xl disabled:opacity-30 shrink-0"
             >
               <ChevronLeft size={16} />
             </Button>
-            
+
             <div className="flex items-center gap-1">
               {[...Array(totalPages)].map((_, i) => (
                 <button
@@ -569,9 +569,9 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
               ))}
             </div>
 
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               className="h-10 px-3 rounded-xl disabled:opacity-30 shrink-0"
@@ -582,14 +582,14 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
         </div>
       )}
 
-      <SaleModal 
+      <SaleModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         menuItems={menuItems}
         editData={editData}
       />
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleDelete}
@@ -597,13 +597,13 @@ export default function SalesHistoryController({ initialTransactions, menuItems 
         message="Apakah Anda yakin ingin menghapus catatan pesanan ini dari nota?"
       />
 
-      <ReceiptModal 
+      <ReceiptModal
         isOpen={isReceiptOpen}
         onClose={() => setIsReceiptOpen(false)}
         data={receiptData}
       />
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isConfirmTransactionOpen}
         onClose={() => setIsConfirmTransactionOpen(false)}
         onConfirm={handleDeleteTransaction}

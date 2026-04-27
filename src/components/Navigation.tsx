@@ -103,7 +103,7 @@ export default function Navigation() {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 font-bold text-sm",
+                        "flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 font-black text-[11px] uppercase tracking-[0.15em] whitespace-nowrap overflow-hidden",
                         isActive 
                           ? "bg-primary text-white shadow-xl shadow-primary/20" 
                           : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-100"
@@ -113,7 +113,7 @@ export default function Navigation() {
                         "transition-colors",
                         isActive ? "text-white" : "text-zinc-700"
                       )} />
-                      {item.label}
+                      <span className="truncate">{item.label}</span>
                     </Link>
                   );
                 })}
@@ -201,14 +201,14 @@ export default function Navigation() {
                       href={item.href}
                       onClick={() => setIsOpen(false)}
                       className={cn(
-                        "flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all text-sm uppercase tracking-wider",
+                        "flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all text-[11px] uppercase tracking-[0.12em] whitespace-nowrap overflow-hidden shrink-0",
                         pathname === item.href 
                           ? "bg-primary text-white shadow-xl shadow-primary/20" 
                           : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-100"
                       )}
                     >
                       <item.icon size={20} className={pathname === item.href ? "text-white" : "text-zinc-700"} />
-                      {item.label}
+                      <span className="truncate">{item.label}</span>
                     </Link>
                   ))}
                 </div>

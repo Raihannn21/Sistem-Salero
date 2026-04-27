@@ -12,6 +12,7 @@ export async function addEmployee(data: {
   address: string;
   emergencyContact: string;
   socialMedia: string;
+  image?: string;
 }) {
   try {
     const hashedPassword = await bcrypt.hash(data.password || "123456", 10);
@@ -26,6 +27,7 @@ export async function addEmployee(data: {
         address: data.address,
         emergencyContact: data.emergencyContact,
         socialMedia: data.socialMedia,
+        image: data.image,
       }
     });
 
@@ -49,6 +51,7 @@ export async function updateEmployee(id: string, data: any) {
       address: data.address,
       emergencyContact: data.emergencyContact,
       socialMedia: data.socialMedia,
+      image: data.image,
     };
 
     if (data.password) {

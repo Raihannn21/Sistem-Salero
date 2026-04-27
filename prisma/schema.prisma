@@ -27,6 +27,7 @@ model User {
   address          String?
   emergencyContact String?
   socialMedia      String?
+  image            String?  @db.Text
   
   // Relasi
   transactions     Transaction[]

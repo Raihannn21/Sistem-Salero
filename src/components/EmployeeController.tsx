@@ -69,8 +69,12 @@ export default function EmployeeController({ employees }: EmployeeControllerProp
             <div className="p-8">
               <div className="flex items-start justify-between mb-8">
                 <div className="flex items-center gap-6">
-                  <div className="h-20 w-20 rounded-[2rem] bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-300 group-hover:bg-primary/5 group-hover:border-primary/20 group-hover:text-primary transition-all duration-500">
-                    <User size={36} />
+                  <div className="h-20 w-20 rounded-[2rem] bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-300 group-hover:bg-primary/5 group-hover:border-primary/20 group-hover:text-primary transition-all duration-500 overflow-hidden shrink-0">
+                    {emp.image ? (
+                      <img src={emp.image} alt={emp.fullName || emp.username} className="h-full w-full object-cover shadow-inner" />
+                    ) : (
+                      <User size={36} />
+                    )}
                   </div>
                   <div>
                     <h3 className="text-2xl font-black text-zinc-900 tracking-tight">{emp.fullName || emp.username}</h3>

@@ -14,7 +14,8 @@ import {
   BarChart3,
   History,
   Users,
-  MessageCircle
+  MessageCircle,
+  StickyNote
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { label: "Catatan Pengeluaran", href: "/expenses", icon: Package, roles: ["OWNER"] },
   { label: "Manajemen Menu", href: "/menu", icon: UtensilsCrossed, roles: ["OWNER"] },
   { label: "Laporan Keuangan", href: "/reports", icon: BarChart3, roles: ["OWNER"] },
+  { label: "Catatan Pribadi", href: "/notes", icon: StickyNote, roles: ["OWNER"] },
   { label: "Kelola Karyawan", href: "/employees", icon: Users, roles: ["OWNER"] },
 ];
 

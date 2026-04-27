@@ -181,7 +181,7 @@ export default function NoteEditor({ initialNote }: NoteEditorProps) {
             ref={editorRef}
             contentEditable
             className="salero-editor flex-1 text-lg md:text-2xl text-zinc-600 focus:outline-none min-h-[400px] leading-relaxed"
-            placeholder="Mulai tulis ide hebat Anda..."
+            data-placeholder="Mulai tulis ide hebat Anda..."
           />
         </div>
       </div>
@@ -205,6 +205,13 @@ export default function NoteEditor({ initialNote }: NoteEditorProps) {
         
         .salero-editor {
           outline: none;
+          position: relative;
+        }
+        .salero-editor:empty:before {
+          content: attr(data-placeholder);
+          color: #e4e4e7; /* zinc-200 */
+          position: absolute;
+          pointer-events: none;
         }
         .salero-editor ul {
           list-style-type: disc !important;

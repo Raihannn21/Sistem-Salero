@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import ReceiptModal from "./ReceiptModal";
+import { ConfirmModal } from "./ui/ConfirmModal";
 
 import { MenuItem } from "@prisma/client";
 
@@ -33,7 +34,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "QRIS">("CASH");
 
-  // Receipt State
+  // Cart States
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
 
@@ -50,7 +51,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
   }, [isMobileCartOpen]);
 
   const filteredMenuItems = useMemo(() => {
-    return menuItems.filter(item => 
+    return menuItems.filter(item =>
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [menuItems, searchQuery]);
@@ -59,7 +60,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
     setCart(prev => {
       const existing = prev.find(item => item.id === menu.id);
       if (existing) {
-        return prev.map(item => 
+        return prev.map(item =>
           item.id === menu.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
@@ -106,7 +107,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
           paymentMethod: paymentMethod,
           cashierName: session?.user?.name || "Kasir"
         });
-        
+
         setIsReceiptOpen(true);
         setCart([]);
         setIsMobileCartOpen(false);
@@ -125,7 +126,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
   return (
     <>
       <div className="flex flex-col lg:flex-row gap-10 min-h-[calc(100vh-120px)] bg-[#f8f8f8] -m-8 lg:-m-12 p-8 lg:p-12 pb-32 lg:pb-12">
-        
+
         {/* Left: Menu Section */}
         <div className="flex-1 space-y-8">
           <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6">
@@ -133,13 +134,13 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
               <h1 className="text-4xl font-black text-zinc-900 tracking-tight">Kasir Salero</h1>
               <p className="text-zinc-500 font-bold text-sm uppercase tracking-widest opacity-60">PILIH MENU MASAKAN</p>
             </div>
-            
+
             {/* Search Bar */}
             <div className="relative group w-full xl:w-80">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-primary transition-colors" size={20} />
-              <input 
-                type="text" 
-                placeholder="Cari menu masakan..." 
+              <input
+                type="text"
+                placeholder="Cari menu masakan..."
                 className="w-full bg-white border-2 border-zinc-100 text-zinc-900 pl-14 pr-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 shadow-sm transition-all font-bold placeholder:text-zinc-300 uppercase text-xs tracking-widest"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -149,23 +150,39 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
 
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {filteredMenuItems.map(item => (
-              <button 
-                key={item.id} 
+              <button
+                key={item.id}
                 onClick={() => addToCart(item)}
-                className="group relative flex flex-col p-6 rounded-[2.5rem] bg-white border-2 border-primary/20 hover:border-primary shadow-[0_10px_30px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(180,0,0,0.15)] transition-all duration-300 text-left active:scale-[0.95] overflow-hidden"
+                className="group relative flex flex-col p-4 rounded-[2.5rem] bg-white border-2 border-primary/10 hover:border-primary shadow-[0_10px_30px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(180,0,0,0.15)] transition-all duration-300 text-left active:scale-[0.95] overflow-hidden min-h-[180px]"
               >
-                <div className="absolute top-0 right-0 p-3">
-                  <div className="h-6 w-6 rounded-full bg-zinc-50 border border-zinc-100 group-hover:bg-primary group-hover:text-white group-hover:border-primary text-zinc-300 flex items-center justify-center transition-all duration-300">
-                    <Plus size={12} strokeWidth={4} />
-                  </div>
+                {/* Image Background / Icon */}
+                <div className="absolute inset-0 z-0 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                  {item.image ? (
+                    <img src={item.image} alt="" className="h-full w-full object-cover grayscale" />
+                  ) : (
+                    <Utensils className="h-full w-full p-8" />
+                  )}
                 </div>
 
-                <div className="mt-2 space-y-4">
-                  <h3 className="font-black text-zinc-900 text-base leading-tight group-hover:text-primary transition-colors break-words uppercase">
-                    {item.name}
-                  </h3>
-                  <div className="pt-4 border-t border-zinc-100">
-                    <p className="text-lg font-black text-primary tracking-tight">
+                <div className="relative z-10 flex flex-col h-full w-full">
+                  <div className="flex justify-between items-start mb-auto">
+                    <div className="h-14 w-14 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-primary/20 transition-all">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <Utensils size={24} className="text-zinc-200" />
+                      )}
+                    </div>
+                    <div className="h-8 w-8 rounded-full bg-zinc-50 border border-zinc-100 group-hover:bg-primary group-hover:text-white group-hover:border-primary text-zinc-300 flex items-center justify-center transition-all duration-300">
+                      <Plus size={14} strokeWidth={4} />
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <h3 className="font-black text-zinc-900 text-sm leading-tight group-hover:text-primary transition-colors break-words uppercase tracking-tight">
+                      {item.name}
+                    </h3>
+                    <p className="text-base font-black text-primary tracking-tighter mt-1">
                       Rp {item.basePrice.toLocaleString()}
                     </p>
                   </div>
@@ -183,21 +200,24 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
 
         {/* Desktop Cart Sidebar */}
         <div className="hidden lg:block w-[420px] shrink-0">
-          <CartContent 
+          <CartContent
             cart={cart}
             totalAmount={totalAmount}
             loading={loading}
             paymentMethod={paymentMethod}
             onSetPaymentMethod={setPaymentMethod}
             onUpdateQuantity={updateQuantity}
-            onRemove={removeFromCart}
             onCheckout={handleCheckout}
+            onClearCart={() => {
+              setCart([]);
+              showToast("KERANJANG DIKOSONGKAN", "success");
+            }}
           />
         </div>
 
         {/* Mobile Floating Action Button */}
         <div className="lg:hidden fixed bottom-8 right-8 z-[100]">
-          <button 
+          <button
             onClick={() => setIsMobileCartOpen(true)}
             className="h-20 w-20 rounded-[2rem] bg-primary text-white flex items-center justify-center shadow-[0_20px_50px_rgba(180,0,0,0.4)] relative active:scale-90 transition-all border-4 border-white"
           >
@@ -211,14 +231,14 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
         </div>
 
         {/* Mobile Cart Overlay/Drawer */}
-        <div 
+        <div
           className={cn(
             "fixed inset-0 bg-zinc-950/40 backdrop-blur-md z-[110] lg:hidden transition-opacity duration-500",
             isMobileCartOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          )} 
-          onClick={() => setIsMobileCartOpen(false)} 
+          )}
+          onClick={() => setIsMobileCartOpen(false)}
         />
-        <div 
+        <div
           className={cn(
             "fixed inset-x-0 bottom-0 lg:hidden z-[120] max-h-[92vh] flex flex-col transition-transform duration-[800ms] will-change-transform",
             isMobileCartOpen ? "translate-y-0" : "translate-y-full"
@@ -230,9 +250,9 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
             <div className="p-4 flex justify-center bg-white sticky top-0 z-10">
               <div className="h-1.5 w-12 bg-zinc-100 rounded-full" />
             </div>
-            
+
             {/* Close Button */}
-            <button 
+            <button
               onClick={() => setIsMobileCartOpen(false)}
               className="absolute right-8 top-6 z-20 h-10 w-10 rounded-full bg-zinc-50 hover:bg-zinc-100 flex items-center justify-center text-zinc-900 transition-colors shadow-sm"
             >
@@ -240,15 +260,18 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
             </button>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden pt-2">
-              <CartContent 
+              <CartContent
                 cart={cart}
                 totalAmount={totalAmount}
                 loading={loading}
                 paymentMethod={paymentMethod}
                 onSetPaymentMethod={setPaymentMethod}
                 onUpdateQuantity={updateQuantity}
-                onRemove={removeFromCart}
                 onCheckout={handleCheckout}
+                onClearCart={() => {
+                  setCart([]);
+                  showToast("KERANJANG DIKOSONGKAN", "success");
+                }}
                 isMobile={true}
               />
             </div>
@@ -257,7 +280,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
       </div>
 
       {/* Receipt Modal */}
-      <ReceiptModal 
+      <ReceiptModal
         isOpen={isReceiptOpen}
         onClose={() => setIsReceiptOpen(false)}
         data={receiptData}
@@ -267,25 +290,27 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
 }
 
 // Sub-component for Cart Content
-function CartContent({ 
-  cart, 
-  totalAmount, 
-  loading, 
+function CartContent({
+  cart,
+  totalAmount,
+  loading,
   paymentMethod,
   onSetPaymentMethod,
-  onUpdateQuantity, 
-  onRemove, 
+  onUpdateQuantity,
+  onRemove,
   onCheckout,
+  onClearCart,
   isMobile = false
-}: { 
-  cart: CartItem[], 
-  totalAmount: number, 
-  loading: boolean, 
+}: {
+  cart: CartItem[],
+  totalAmount: number,
+  loading: boolean,
   paymentMethod: "CASH" | "QRIS",
   onSetPaymentMethod: (method: "CASH" | "QRIS") => void,
   onUpdateQuantity: (id: string, delta: number) => void,
   onRemove: (id: string) => void,
   onCheckout: () => void,
+  onClearCart: () => void,
   isMobile?: boolean
 }) {
   return (
@@ -301,8 +326,19 @@ function CartContent({
           </div>
           <h2 className="text-xl font-black text-zinc-900 tracking-tight uppercase">Nota Pesanan</h2>
         </div>
-        <div className="px-3 py-1 rounded-full bg-primary/10 text-primary font-black text-[10px] tracking-widest uppercase">
-          {cart.reduce((sum, i) => sum + i.quantity, 0)} Item
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1 rounded-full bg-primary/10 text-primary font-black text-[10px] tracking-widest uppercase">
+            {cart.reduce((sum, i) => sum + i.quantity, 0)} Item
+          </div>
+          {cart.length > 0 && (
+            <button
+              onClick={onClearCart}
+              className="h-10 w-10 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border border-rose-100 group shadow-sm active:scale-90"
+              title="Kosongkan Keranjang"
+            >
+              <Trash2 size={16} strokeWidth={2.5} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -348,29 +384,29 @@ function CartContent({
 
       {/* Cart Footer */}
       <div className="p-8 lg:p-10 pt-8 border-t border-zinc-100 bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.02)] space-y-8">
-        
+
         {/* Payment Method Selector */}
         <div className="space-y-4">
           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] block ml-1">Metode Pembayaran</span>
           <div className="grid grid-cols-2 gap-3">
-            <button 
+            <button
               onClick={() => onSetPaymentMethod("CASH")}
               className={cn(
                 "flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border-2",
-                paymentMethod === "CASH" 
-                  ? "bg-zinc-900 border-zinc-900 text-white shadow-xl shadow-zinc-900/20" 
+                paymentMethod === "CASH"
+                  ? "bg-zinc-900 border-zinc-900 text-white shadow-xl shadow-zinc-900/20"
                   : "bg-white border-zinc-100 text-zinc-400 hover:border-zinc-200"
               )}
             >
               <Banknote size={16} />
               Tunai
             </button>
-            <button 
+            <button
               onClick={() => onSetPaymentMethod("QRIS")}
               className={cn(
                 "flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border-2",
-                paymentMethod === "QRIS" 
-                  ? "bg-primary border-primary text-white shadow-xl shadow-primary/20" 
+                paymentMethod === "QRIS"
+                  ? "bg-primary border-primary text-white shadow-xl shadow-primary/20"
                   : "bg-white border-zinc-100 text-zinc-400 hover:border-zinc-200"
               )}
             >
@@ -386,14 +422,14 @@ function CartContent({
             <span className="text-3xl font-black text-primary tracking-tighter">Rp {totalAmount.toLocaleString()}</span>
           </div>
         </div>
-        
-        <button 
-          disabled={cart.length === 0 || loading} 
+
+        <button
+          disabled={cart.length === 0 || loading}
           onClick={onCheckout}
           className={cn(
             "w-full h-16 rounded-[2rem] flex items-center justify-center gap-4 font-black text-sm tracking-widest uppercase transition-all duration-500",
-            cart.length > 0 
-              ? "bg-primary text-white shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98]" 
+            cart.length > 0
+              ? "bg-primary text-white shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98]"
               : "bg-zinc-200 text-zinc-400 cursor-not-allowed"
           )}
         >

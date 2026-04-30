@@ -91,8 +91,12 @@ export default function MenuController({ menuItems }: MenuControllerProps) {
           <Card key={item.id} padding="none" className="group overflow-hidden flex flex-col h-full hover:border-primary/20 transition-all">
             <div className="p-8 pb-4 flex-1">
               <div className="flex items-start justify-between mb-6">
-                <div className="h-16 w-16 rounded-[1.5rem] bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-300 group-hover:bg-primary/5 group-hover:border-primary/20 group-hover:text-primary transition-all duration-500">
-                  <Utensils size={28} />
+                <div className="h-16 w-16 rounded-[1.5rem] bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-300 group-hover:bg-primary/5 group-hover:border-primary/20 group-hover:text-primary transition-all duration-500 overflow-hidden">
+                  {item.image ? (
+                    <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <Utensils size={28} />
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button

@@ -42,6 +42,7 @@ model MenuItem {
   id           String       @id @default(cuid())
   name         String
   basePrice    Float        // Selling price
+  image        String?      @db.Text
   sales        Sale[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt

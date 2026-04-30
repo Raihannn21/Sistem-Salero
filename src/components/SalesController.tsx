@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { ShoppingCart, Trash2, Minus, Plus, ChevronRight, Search, Receipt, X, Banknote, QrCode } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, ChevronRight, Search, Receipt, X, Banknote, QrCode, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { completeTransaction } from "@/actions/sales";
 import { useToast } from "./ui/Toast";

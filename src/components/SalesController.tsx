@@ -207,6 +207,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
             paymentMethod={paymentMethod}
             onSetPaymentMethod={setPaymentMethod}
             onUpdateQuantity={updateQuantity}
+            onRemove={removeFromCart}
             onCheckout={handleCheckout}
             onClearCart={() => {
               setCart([]);
@@ -267,6 +268,7 @@ export default function SalesController({ menuItems }: SalesControllerProps) {
                 paymentMethod={paymentMethod}
                 onSetPaymentMethod={setPaymentMethod}
                 onUpdateQuantity={updateQuantity}
+                onRemove={removeFromCart}
                 onCheckout={handleCheckout}
                 onClearCart={() => {
                   setCart([]);

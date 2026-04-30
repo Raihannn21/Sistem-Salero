@@ -36,6 +36,6 @@ export default async function getCroppedImg(
     pixelCrop.height
   );
 
-  // return as base64
-  return canvas.toDataURL("image/jpeg");
+  // return as base64 with 0.7 compression quality
+  return canvas.toDataURL("image/jpeg", 0.7);
 }

@@ -11,12 +11,19 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [slowConnection, setSlowConnection] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSlowConnection(false);
+
+    // Timer for slow connection feedback
+    const slowTimer = setTimeout(() => {
+      setSlowConnection(true);
+    }, 5000); // 5 seconds
 
     try {
       const res = await signIn("credentials", {
@@ -25,14 +32,17 @@ export default function LoginPage() {
         redirect: false,
       });
 
+      clearTimeout(slowTimer);
+
       if (res?.error) {
         setError("Username atau password salah!");
       } else {
-        router.push("/");
-        router.refresh();
+        // Direct redirect without refresh for better performance on weak devices
+        window.location.href = "/";
       }
     } catch (err) {
-      setError("Terjadi kesalahan sistem.");
+      clearTimeout(slowTimer);
+      setError("Koneksi tidak stabil. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -40,39 +50,43 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] flex items-center justify-center p-6 relative overflow-hidden font-sans">
-      {/* Abstract Background Elements */}
-      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
+      {/* Lighter Background Elements for Weak Devices */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl opacity-50"></div>
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl opacity-50"></div>
 
       <div className="w-full max-w-md relative z-10">
-        <div className="bg-white rounded-[3rem] p-10 lg:p-14 border border-zinc-50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)]">
-          <div className="flex flex-col items-center mb-12">
-            <div className="relative mb-6">
-              <div className="absolute inset-0 bg-primary blur-3xl opacity-20 scale-150"></div>
-              <div className="relative flex items-center justify-center transition-transform duration-700 hover:scale-110">
+        <div className="bg-white rounded-[2.5rem] p-8 lg:p-12 border border-zinc-100 shadow-xl">
+          <div className="flex flex-col items-center mb-10">
+            <div className="relative mb-4">
+              <div className="relative flex items-center justify-center">
                 <Image 
                   src="/salero-logo.png" 
                   alt="Salero Logo" 
-                  width={180} 
-                  height={180} 
-                  sizes="180px"
+                  width={150} 
+                  height={150} 
+                  sizes="150px"
                   className="object-contain"
                   priority
                 />
               </div>
             </div>
-            {/* Texts removed for a cleaner look as requested */}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest p-4 rounded-2xl text-center">
+              <div className="bg-red-50 border border-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest p-4 rounded-xl text-center">
                 {error}
               </div>
             )}
 
-            <div className="space-y-6">
-              <div className="space-y-2">
+            {loading && slowConnection && !error && (
+              <div className="bg-amber-50 border border-amber-100 text-amber-600 text-[10px] font-black uppercase tracking-widest p-4 rounded-xl text-center animate-pulse">
+                Jaringan sedang lambat. Mohon tunggu...
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Username</label>
                 <div className="relative group">
                   <UserIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={18} />
@@ -80,13 +94,13 @@ export default function LoginPage() {
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold placeholder:text-zinc-300"
-                    placeholder="Masukkan username"
+                    className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-4.5 rounded-2xl focus:outline-none focus:border-primary/30 transition-all font-bold placeholder:text-zinc-300 text-sm"
+                    placeholder="Username"
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Password</label>
                 <div className="relative group">
                   <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300 group-focus-within:text-primary transition-colors" size={18} />
@@ -94,7 +108,7 @@ export default function LoginPage() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-bold placeholder:text-zinc-300"
+                    className="w-full bg-zinc-50 border border-zinc-100 text-zinc-900 pl-14 pr-6 py-4.5 rounded-2xl focus:outline-none focus:border-primary/30 transition-all font-bold placeholder:text-zinc-300 text-sm"
                     placeholder="••••••••"
                     required
                   />
@@ -105,27 +119,30 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-5 bg-zinc-950 text-white font-black rounded-2xl shadow-2xl shadow-zinc-200 hover:bg-zinc-900 hover:scale-[1.02] active:scale-[0.98] transition-all tracking-widest uppercase text-[10px] flex items-center justify-center gap-3"
+              className="w-full py-4.5 bg-zinc-950 text-white font-black rounded-2xl shadow-xl hover:bg-zinc-900 transition-all tracking-widest uppercase text-[10px] flex items-center justify-center gap-3 disabled:opacity-70"
             >
               {loading ? (
-                <Loader2 className="animate-spin" size={20} />
+                <>
+                  <Loader2 className="animate-spin" size={18} />
+                  MEMPROSES...
+                </>
               ) : (
                 <>
                   MASUK KE SISTEM
-                  <LogIn size={18} strokeWidth={3} />
+                  <LogIn size={16} strokeWidth={3} />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-12 text-center">
+          <div className="mt-10 text-center">
             <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">
-              Butuh bantuan? <a href="https://wa.me/6281365150455?text=Halo%20Developer%20Salero%2C%20saya%20butuh%20bantuan%20terkait%20sistem..." target="_blank" rel="noopener noreferrer" className="text-primary hover:underline cursor-pointer">Hubungi Developer</a>
+              Butuh bantuan? <a href="https://wa.me/6281365150455" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Hubungi Developer</a>
             </p>
           </div>
         </div>
         
-        <p className="text-center mt-10 text-[10px] font-black text-zinc-300 uppercase tracking-[0.3em]">
+        <p className="text-center mt-8 text-[10px] font-black text-zinc-300 uppercase tracking-[0.3em]">
           &copy; 2026 SALERO RESTO GROUP
         </p>
       </div>
